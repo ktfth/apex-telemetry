@@ -6,6 +6,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
+#include <chrono>
+#include <cmath>
 
 int main(int argc, char* argv[]) {
     std::cout << "====================================================\n"
@@ -15,11 +18,17 @@ int main(int argc, char* argv[]) {
     int year = 2024;
     int64_t session_key = 9472; // Bahrain GP 2024 Qualifying
     bool offline_mode = false;
+    bool replay_mode = false;
+    double replay_speed = 1.0;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--offline") {
             offline_mode = true;
+        } else if (arg == "--replay") {
+            replay_mode = true;
+        } else if (arg == "--speed" && i + 1 < argc) {
+            replay_speed = std::stod(argv[++i]);
         } else if (arg == "--year" && i + 1 < argc) {
             year = std::stoi(argv[++i]);
         } else if (arg == "--session" && i + 1 < argc) {
@@ -29,6 +38,35 @@ int main(int argc, char* argv[]) {
 
     apex::ingest::IngestStorage storage("data");
     apex::ingest::PostgreSQLStorage database;
+
+    if (replay_mode) {
+        std::cout << "[INFO] Running Telemetry Replay Engine (session=" << session_key << ", speed=" << replay_speed << "x)...\n";
+        const double total_dist = 5412.0;
+        const double step_m = 5.0;
+        double current_dist = 0.0;
+        uint64_t frame = 0;
+
+        while (current_dist <= total_dist) {
+            double speed_kmh = 300.0 - 150.0 * std::sin(current_dist / 300.0) * std::sin(current_dist / 300.0);
+            if (speed_kmh < 65.0) speed_kmh = 65.0;
+
+            std::cout << "[REPLAY FRAME " << frame << "] Distance: " << current_dist << "m | Speed: " << speed_kmh << " km/h\r" << std::flush;
+
+            // Simula delay de broadcast proporcional à velocidade e fator de aceleração
+            const double dt_real = step_m / (speed_kmh / 3.6);
+            const auto sleep_ms = static_cast<int>((dt_real / replay_speed) * 1000.0);
+            if (sleep_ms > 0 && sleep_ms < 500) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
+            } else {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+
+            current_dist += step_m;
+            frame++;
+        }
+        std::cout << "\n[SUCCESS] Replay completed for " << frame << " telemetry frames.\n";
+        return 0;
+    }
 
     if (offline_mode) {
         std::cout << "[INFO] Initializing normalized storage in offline mode...\n";

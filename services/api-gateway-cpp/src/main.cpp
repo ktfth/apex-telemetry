@@ -250,6 +250,46 @@ int main(int argc, char* argv[]) {
         return apex::gateway::HttpResponse{200, "application/json", std::move(payload), {}};
     });
 
+    // 7. Server-Sent Events (SSE) Live Session Stream (Fase 5)
+    server.route_sse("/api/v1/sessions/:session_key/live", [&metrics](const apex::gateway::HttpRequest& req, const apex::gateway::SseWriter& writer, const std::atomic<bool>& running) {
+        auto session = parse_positive_integer(req.path_params.at("session_key"));
+        if (!session) {
+            writer.send(R"({"error":"Invalid session key","code":"INVALID_SESSION_KEY"})", "error");
+            return;
+        }
+
+        // Handshake inicial
+        writer.send(R"({"status":"connected","session_key":)" + std::to_string(*session) + R"(,"transport":"sse","heartbeat_ms":1000})", "init", "0");
+
+        uint64_t seq = 1;
+        double simulated_distance = 0.0;
+        while (running && writer.connected()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            simulated_distance += 35.0; // ~250 km/h
+            if (simulated_distance > 5412.0) simulated_distance = 0.0;
+
+            // Transmite tick de telemetria em tempo real
+            std::ostringstream tick;
+            tick << "{\"seq\":" << seq
+                 << ",\"distance_m\":" << simulated_distance
+                 << ",\"ref_speed_kmh\":" << (280.0 + 35.0 * std::sin(simulated_distance / 200.0))
+                 << ",\"comp_speed_kmh\":" << (278.0 + 34.0 * std::sin(simulated_distance / 200.0))
+                 << ",\"delta_s\":" << (0.120 + 0.080 * std::sin(simulated_distance / 500.0))
+                 << "}";
+            if (!writer.send(tick.str(), "telemetry_tick", std::to_string(seq))) {
+                break;
+            }
+
+            // A cada 10 ticks, envia evento de race control
+            if (seq % 10 == 0) {
+                std::string rc = R"({"category":"Flag","flag":"GREEN","message":"TRACK CLEAR - SECTOR 2"})";
+                writer.send(rc, "race_control", std::to_string(seq));
+            }
+
+            seq++;
+        }
+    });
+
     server.start(true); // blocks until shutdown
     return 0;
 }

@@ -3,12 +3,21 @@ import type { LapComparison } from '@apex-telemetry/contracts';
 import { DEMO_LAP_COMPARISON } from '../fixtures/demoBahrain2024';
 import { fetchLapComparison } from '../lib/apiClient';
 
+export interface LiveTelemetryTick {
+  seq: number;
+  distance_m: number;
+  ref_speed_kmh: number;
+  comp_speed_kmh: number;
+  delta_s: number;
+}
+
 interface TelemetryState {
   comparison: LapComparison;
   comparisonSource: 'api' | 'demo';
   comparisonLoading: boolean;
   comparisonRequestId: number;
   refreshComparison: () => Promise<void>;
+
   // Cursor e sincronização espacial
   hoveredDistanceM: number | null;
   setHoveredDistanceM: (dist: number | null) => void;
@@ -36,6 +45,18 @@ interface TelemetryState {
   // Aba ativa do painel inferior
   bottomTab: 'timeline' | 'race_control' | 'stints' | 'laps';
   setBottomTab: (tab: 'timeline' | 'race_control' | 'stints' | 'laps') => void;
+
+  // Live SSE stream state
+  liveStreaming: boolean;
+  setLiveStreaming: (active: boolean) => void;
+  liveTick: LiveTelemetryTick | null;
+  setLiveTick: (tick: LiveTelemetryTick | null) => void;
+
+  // Replay mode state
+  replayActive: boolean;
+  replaySpeed: number;
+  toggleReplay: () => void;
+  setReplaySpeed: (speed: number) => void;
 }
 
 export const useTelemetryStore = create<TelemetryState>((set) => ({
@@ -86,5 +107,20 @@ export const useTelemetryStore = create<TelemetryState>((set) => ({
   toggleBottomPanel: () => set((s) => ({ bottomPanelOpen: !s.bottomPanelOpen })),
 
   bottomTab: 'race_control',
-  setBottomTab: (tab) => set({ bottomTab: tab })
+  setBottomTab: (tab) => set({ bottomTab: tab }),
+
+  // Live SSE stream state
+  liveStreaming: false,
+  setLiveStreaming: (active) => set({ liveStreaming: active }),
+  liveTick: null,
+  setLiveTick: (tick) => set((s) => ({
+    liveTick: tick,
+    hoveredDistanceM: tick ? tick.distance_m : s.hoveredDistanceM
+  })),
+
+  // Replay mode state
+  replayActive: false,
+  replaySpeed: 1,
+  toggleReplay: () => set((s) => ({ replayActive: !s.replayActive })),
+  setReplaySpeed: (speed) => set({ replaySpeed: speed })
 }));

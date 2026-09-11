@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTelemetryStore } from '../store/telemetryStore';
 import { checkApiHealth, ApiStatus } from '../lib/apiClient';
-import { PanelLeft, PanelRight, PanelBottom, ShieldAlert, Cpu, Activity } from 'lucide-react';
+import { PanelLeft, PanelRight, PanelBottom, ShieldAlert, Cpu, Activity, Radio, Play, Pause } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const {
@@ -12,7 +12,10 @@ export const Header: React.FC = () => {
     bottomPanelOpen,
     toggleLeftPanel,
     toggleRightPanel,
-    toggleBottomPanel
+    toggleBottomPanel,
+    liveStreaming,
+    replayActive,
+    toggleReplay
   } = useTelemetryStore();
 
   const [apiStatus, setApiStatus] = useState<ApiStatus>({ online: false });
@@ -61,8 +64,33 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Indicadores de Origem, Backend C++ e Qualidade */}
+      {/* Indicadores de Origem, Backend C++, SSE Live e Replay */}
       <div className="flex items-center space-x-3">
+        {/* Live SSE Stream Badge */}
+        {liveStreaming && (
+          <div
+            className="flex items-center space-x-1.5 px-2 py-1 bg-red-950/40 border border-red-700/60 text-red-300 font-mono text-[10px] animate-pulse"
+            title="Recebendo stream de telemetria e controle de corrida em tempo real via Server-Sent Events (SSE)"
+          >
+            <Radio className="w-3 h-3 text-red-400" />
+            <span className="font-bold">LIVE SSE</span>
+          </div>
+        )}
+
+        {/* Replay Mode Toggle */}
+        <button
+          onClick={toggleReplay}
+          className={`flex items-center space-x-1.5 px-2 py-1 border font-mono text-[10px] transition-colors ${
+            replayActive
+              ? 'bg-sky-950/50 border-sky-600 text-sky-300'
+              : 'bg-[#12161c] border-[#212836] text-neutral-400 hover:text-neutral-200'
+          }`}
+          title="Alternar modo de reprodução e replay de telemetria"
+        >
+          {replayActive ? <Pause className="w-3 h-3 text-sky-400" /> : <Play className="w-3 h-3 text-neutral-400" />}
+          <span>{replayActive ? 'REPLAY [PAUSE]' : 'REPLAY [PLAY]'}</span>
+        </button>
+
         {apiStatus.online ? (
           <div
             className="flex items-center space-x-1.5 px-2 py-1 bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 font-mono text-[10px]"

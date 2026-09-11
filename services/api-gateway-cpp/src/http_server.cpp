@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -18,6 +19,36 @@ HttpServer::~HttpServer() {
 
 void HttpServer::route(const std::string& method, const std::string& path_prefix, HttpHandler handler) {
     routes_.push_back({method, path_prefix, std::move(handler)});
+}
+
+void HttpServer::route_sse(const std::string& path_prefix, SseHandler handler) {
+    sse_routes_.push_back({path_prefix, std::move(handler)});
+}
+
+// -- SseWriter implementation --
+
+bool SseWriter::send(const std::string& data, const std::string& event, const std::string& id) const {
+    std::ostringstream frame;
+    if (!id.empty()) frame << "id: " << id << "\n";
+    if (!event.empty()) frame << "event: " << event << "\n";
+    // Split data by newlines per SSE spec
+    std::istringstream lines(data);
+    std::string line;
+    while (std::getline(lines, line)) {
+        frame << "data: " << line << "\n";
+    }
+    frame << "\n"; // End of event
+    const auto payload = frame.str();
+    const auto written = ::write(fd_, payload.data(), payload.size());
+    return written == static_cast<ssize_t>(payload.size());
+}
+
+bool SseWriter::connected() const {
+    struct pollfd pfd{};
+    pfd.fd = fd_;
+    pfd.events = POLLOUT;
+    const int result = poll(&pfd, 1, 0);
+    return result > 0 && !(pfd.revents & (POLLERR | POLLHUP));
 }
 
 namespace {
@@ -173,7 +204,47 @@ void HttpServer::handle_client(int client_fd) {
     req.query = query;
     req.query_params = parse_query(query);
 
-    // Encontra rota correspondente
+    // Parse request headers
+    std::string header_line;
+    while (std::getline(stream, header_line) && header_line != "\r" && !header_line.empty()) {
+        auto colon_pos = header_line.find(':');
+        if (colon_pos != std::string::npos) {
+            auto key = header_line.substr(0, colon_pos);
+            auto val = header_line.substr(colon_pos + 1);
+            // Trim whitespace
+            while (!val.empty() && (val[0] == ' ' || val[0] == '\t')) val.erase(0, 1);
+            while (!val.empty() && (val.back() == '\r' || val.back() == '\n')) val.pop_back();
+            req.headers[key] = val;
+        }
+    }
+
+    // Check SSE routes first (GET only)
+    if (method == "GET") {
+        for (const auto& sse_route : sse_routes_) {
+            std::map<std::string, std::string> path_params;
+            if (match_route(sse_route.pattern, path, path_params)) {
+                req.path_params = std::move(path_params);
+
+                // Send SSE headers — do NOT close the fd; the handler owns it
+                std::string sse_headers =
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: text/event-stream\r\n"
+                    "Cache-Control: no-cache\r\n"
+                    "Connection: keep-alive\r\n"
+                    "Access-Control-Allow-Origin: *\r\n"
+                    "\r\n";
+                write(client_fd, sse_headers.data(), sse_headers.size());
+
+                SseWriter writer(client_fd);
+                sse_route.handler(req, writer, running_);
+
+                close(client_fd);
+                return;
+            }
+        }
+    }
+
+    // Regular HTTP routes
     HttpResponse res{404, "application/json", R"({"error": "Route not found", "code": "NOT_FOUND"})", {}};
     for (const auto& route : routes_) {
         std::map<std::string, std::string> path_params;

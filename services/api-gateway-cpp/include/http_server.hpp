@@ -28,12 +28,36 @@ struct HttpResponse {
 
 using HttpHandler = std::function<HttpResponse(const HttpRequest&)>;
 
+/// SSE writer: sends individual SSE frames to the connected client.
+/// Returns false if the write failed (client disconnected).
+class SseWriter {
+public:
+    explicit SseWriter(int fd) : fd_(fd) {}
+
+    /// Send an SSE event. Fields follow the spec: event (optional), data, id (optional).
+    bool send(const std::string& data, const std::string& event = "", const std::string& id = "") const;
+
+    /// Check if the client is still connected (non-blocking).
+    bool connected() const;
+
+    int fd() const { return fd_; }
+
+private:
+    int fd_;
+};
+
+/// Handler that receives a long-lived SSE connection.
+/// The handler is called in a dedicated thread and should loop, writing events
+/// via the SseWriter until it returns false or the server is stopping.
+using SseHandler = std::function<void(const HttpRequest&, const SseWriter&, const std::atomic<bool>& running)>;
+
 class HttpServer {
 public:
     explicit HttpServer(int port = 8080);
     ~HttpServer();
 
     void route(const std::string& method, const std::string& path_prefix, HttpHandler handler);
+    void route_sse(const std::string& path_prefix, SseHandler handler);
     void start(bool block = false);
     void stop();
 
@@ -45,11 +69,16 @@ private:
         std::string pattern;
         HttpHandler handler;
     };
+    struct SseRoute {
+        std::string pattern;
+        SseHandler handler;
+    };
     int port_;
     int server_fd_{-1};
     std::atomic<bool> running_{false};
     std::vector<std::thread> worker_threads_;
     std::vector<Route> routes_;
+    std::vector<SseRoute> sse_routes_;
 
     void handle_client(int client_fd);
 };

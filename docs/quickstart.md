@@ -52,11 +52,14 @@ Executáveis gerados:
 # Modo offline (gera dados normalizados a partir do audit fixture)
 ./build/services/ingest-cpp/apex_ingest --offline
 
+# Modo replay (simula reprodução de telemetria espacial frame a frame)
+./build/services/ingest-cpp/apex_ingest --replay --speed 10
+
 # Modo online (ingestão direta da OpenF1 com retry e rate limiting)
 ./build/services/ingest-cpp/apex_ingest --session 9472 --year 2024
 ```
 
-### 3.3. Iniciar o API Gateway REST
+### 3.3. Iniciar o API Gateway REST e SSE
 ```bash
 ./build/services/api-gateway-cpp/apex_api_gateway 8080
 ```
@@ -66,6 +69,7 @@ Endpoints disponíveis:
 - `GET http://localhost:8080/api/v1/sessions/9472/drivers`
 - `GET http://localhost:8080/api/v1/sessions/9472/laps`
 - `GET http://localhost:8080/api/v1/sessions/9472/race-control`
+- `GET http://localhost:8080/api/v1/sessions/9472/live` (Server-Sent Events stream contínuo)
 - `GET http://localhost:8080/api/v1/analysis/compare?session_key=9472&ref_driver=1&ref_lap=14&comp_driver=16&comp_lap=15&step_m=5`
 - `GET http://localhost:8080/metrics` (Prometheus text exposition format)
 
