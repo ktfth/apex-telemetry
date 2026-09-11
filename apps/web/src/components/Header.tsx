@@ -43,7 +43,7 @@ export const Header: React.FC = () => {
             Apex<span className="text-sky-400">Telemetry</span>
           </span>
           <span className="text-[10px] font-mono px-1.5 py-0.5 bg-[#161b24] text-neutral-400 border border-[#232936]">
-            v1.1.0-fase2
+            v1.3.0-fase3
           </span>
         </div>
 
@@ -66,10 +66,12 @@ export const Header: React.FC = () => {
         {apiStatus.online ? (
           <div
             className="flex items-center space-x-1.5 px-2 py-1 bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 font-mono text-[10px]"
-            title="Conectado diretamente ao api-gateway-cpp (C++23) e base normalizada."
+            title="Conectado ao api-gateway-cpp com motor numérico analytics-cpp ativo em C++23."
           >
             <Activity className="w-3 h-3 text-emerald-400 animate-pulse" />
             <span className="font-bold">API GATEWAY C++23 [ONLINE]</span>
+            <span className="text-emerald-600">|</span>
+            <span>analytics-cpp (5m)</span>
             <span className="text-emerald-600">|</span>
             <span>{apiStatus.latencyMs}ms</span>
           </div>

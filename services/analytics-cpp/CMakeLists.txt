@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(apex_analytics
     src/main.cpp
+    src/spatial_alignment.cpp
     ../common/simdjson/simdjson.cpp
 )
 

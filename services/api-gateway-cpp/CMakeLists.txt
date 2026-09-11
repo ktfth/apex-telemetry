@@ -8,10 +8,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(apex_api_gateway
     src/main.cpp
     src/http_server.cpp
+    ../analytics-cpp/src/spatial_alignment.cpp
+    ../common/simdjson/simdjson.cpp
 )
 
 target_include_directories(apex_api_gateway PRIVATE
     include
+    ../analytics-cpp/include
+    ../common/simdjson
 )
 
 target_compile_options(apex_api_gateway PRIVATE
