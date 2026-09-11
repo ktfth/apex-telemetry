@@ -17,13 +17,29 @@ main = do
         , fullThrottleDistCompM = 1671.0
         , brakingPointDiffM = -4.2
         }
-      ins = buildExplainableLossInsight "16" ev
+      ins = generateTelemetryInsight "16" ev
+      
+      dstate = DriverState
+        { currentDriverNum = 16
+        , currentStintNum = 3
+        , activeCompound = Soft
+        , tyreAgeLaps = 14
+        , inPitLane = False
+        }
+      rec = recommendNextPitStop dstate 0.132 57
+
   putStrLn "{"
   putStrLn "  \"service\": \"apex-strategy-hs\","
   putStrLn "  \"version\": \"1.0.0\","
-  putStrLn "  \"status\": \"initialized\","
+  putStrLn "  \"status\": \"healthy\","
   putStrLn "  \"sample_insight\": {"
   putStrLn $ "    \"driver\": \"" ++ show (driverCode ins) ++ "\","
-  TIO.putStrLn $ "    \"explanation\": \"" <> explanation ins <> "\""
+  TIO.putStrLn $ "    \"explanation\": \"" <> explanation ins <> "\","
+  putStrLn $ "    \"confidence\": " ++ show (confidenceValue (confidence ins))
+  putStrLn "  },"
+  putStrLn "  \"strategy_recommendation\": {"
+  putStrLn $ "    \"target_lap\": " ++ show (targetLap rec) ++ ","
+  putStrLn $ "    \"next_compound\": \"" ++ show (nextCompound rec) ++ "\","
+  putStrLn $ "    \"projected_gain_s\": " ++ show (projectedDeltaGainS rec)
   putStrLn "  }"
   putStrLn "}"
