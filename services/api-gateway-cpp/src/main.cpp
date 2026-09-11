@@ -1,12 +1,33 @@
 #include "http_server.hpp"
+#include "database_repository.hpp"
 #include "spatial_alignment.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <csignal>
 #include <cmath>
+#include <charconv>
+#include <optional>
+#include <memory>
 
 static apex::gateway::HttpServer* g_server = nullptr;
+
+namespace {
+std::optional<int64_t> parse_positive_integer(const std::string& value) {
+    int64_t result{};
+    const auto [ptr, ec] = std::from_chars(value.data(), value.data() + value.size(), result);
+    if (ec != std::errc{} || ptr != value.data() + value.size() || result <= 0) return std::nullopt;
+    return result;
+}
+
+apex::gateway::HttpResponse api_error(int status, const std::string& code, const std::string& message) {
+    return {status, "application/json", "{\"error\":\"" + message + "\",\"code\":\"" + code + "\"}", {}};
+}
+
+apex::gateway::HttpResponse data_response(std::string body, const std::string& source) {
+    return {200, "application/json", std::move(body), {{"X-Apex-Data-Source", source}}};
+}
+}
 
 void signal_handler(int sig) {
     (void)sig;
@@ -98,32 +119,47 @@ int main(int argc, char* argv[]) {
               << "====================================================\n";
 
     apex::gateway::HttpServer server(port);
+    auto repository = std::make_shared<apex::gateway::DatabaseRepository>();
     g_server = &server;
 
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
 
     // 1. Health check
-    server.route("GET", "/api/v1/health", [](const apex::gateway::HttpRequest&) {
+    server.route("GET", "/api/v1/health", [repository](const apex::gateway::HttpRequest&) {
+        const bool database_healthy = repository->healthy();
         return apex::gateway::HttpResponse{
             200, "application/json",
-            R"({"status":"healthy","service":"apex-api-gateway","version":"1.2.0-fase3","analytics_engine":"spatial_alignment_cpp23","cpp_standard":202302L})",
+            std::string(R"({"status":"healthy","service":"apex-api-gateway","version":"1.5.0-fase5","analytics_engine":"spatial_alignment_cpp23","database":{"configured":)") +
+                (repository->configured() ? "true" : "false") + ",\"healthy\":" + (database_healthy ? "true" : "false") +
+                "},\"cpp_standard\":202302}",
             {}
         };
     });
 
     // 2. Sessions listing
-    server.route("GET", "/api/v1/sessions", [](const apex::gateway::HttpRequest&) {
+    server.route("GET", "/api/v1/sessions", [repository](const apex::gateway::HttpRequest& req) {
+        std::optional<int> year;
+        if (const auto it = req.query_params.find("year"); it != req.query_params.end()) {
+            const auto parsed = parse_positive_integer(it->second);
+            if (!parsed || *parsed < 1950 || *parsed > 2200) return api_error(422, "INVALID_YEAR", "year must be between 1950 and 2200");
+            year = static_cast<int>(*parsed);
+        }
+        if (auto data = repository->sessions(year)) return data_response(std::move(*data), "postgresql");
         std::string fallback = R"([
             {"session_key":9472,"session_name":"Qualifying","session_type":"Qualifying","circuit_key":63,"circuit_name":"Bahrain International Circuit","country_name":"Bahrain","date_start":"2024-03-01T16:00:00Z","year":2024},
             {"session_key":9473,"session_name":"Race","session_type":"Race","circuit_key":63,"circuit_name":"Bahrain International Circuit","country_name":"Bahrain","date_start":"2024-03-02T15:00:00Z","year":2024}
         ])";
         std::string data = read_file_or_default("data/normalized/sessions.json", fallback);
-        return apex::gateway::HttpResponse{200, "application/json", data, {}};
+        return data_response(std::move(data), "normalized-file-fallback");
     });
 
     // 3. Drivers listing
-    server.route("GET", "/api/v1/sessions/9472/drivers", [](const apex::gateway::HttpRequest&) {
+    server.route("GET", "/api/v1/sessions/:session_key/drivers", [repository](const apex::gateway::HttpRequest& req) {
+        const auto session = parse_positive_integer(req.path_params.at("session_key"));
+        if (!session) return api_error(400, "INVALID_SESSION_KEY", "session_key must be a positive integer");
+        if (auto data = repository->drivers(*session)) return data_response(std::move(*data), "postgresql");
+        if (*session != 9472) return api_error(404, "SESSION_NOT_FOUND", "No driver dataset is available for this session");
         std::string fallback = R"([
             {"driver_number":1,"broadcast_name":"M VERSTAPPEN","full_name":"Max Verstappen","name_acronym":"VER","team_name":"Red Bull Racing","team_colour":"#3671C6"},
             {"driver_number":16,"broadcast_name":"C LECLERC","full_name":"Charles Leclerc","name_acronym":"LEC","team_name":"Scuderia Ferrari","team_colour":"#E8002D"},
@@ -131,35 +167,74 @@ int main(int argc, char* argv[]) {
             {"driver_number":4,"broadcast_name":"L NORRIS","full_name":"Lando Norris","name_acronym":"NOR","team_name":"McLaren","team_colour":"#FF8000"}
         ])";
         std::string data = read_file_or_default("data/normalized/9472_drivers.json", fallback);
-        return apex::gateway::HttpResponse{200, "application/json", data, {}};
+        return data_response(std::move(data), "normalized-file-fallback");
     });
 
     // 4. Laps
-    server.route("GET", "/api/v1/sessions/9472/laps", [](const apex::gateway::HttpRequest&) {
+    server.route("GET", "/api/v1/sessions/:session_key/laps", [repository](const apex::gateway::HttpRequest& req) {
+        const auto session = parse_positive_integer(req.path_params.at("session_key"));
+        if (!session) return api_error(400, "INVALID_SESSION_KEY", "session_key must be a positive integer");
+        std::optional<int32_t> driver;
+        if (const auto it = req.query_params.find("driver_number"); it != req.query_params.end()) {
+            const auto parsed = parse_positive_integer(it->second);
+            if (!parsed) return api_error(422, "INVALID_DRIVER_NUMBER", "driver_number must be a positive integer");
+            driver = static_cast<int32_t>(*parsed);
+        }
+        if (auto data = repository->laps(*session, driver)) return data_response(std::move(*data), "postgresql");
+        if (*session != 9472) return api_error(404, "SESSION_NOT_FOUND", "No lap dataset is available for this session");
         std::string data = R"([
             {"lap_number":11,"lap_time_s":89.840,"is_valid":true,"lap_kind":"FLYING","compound":"SOFT","stint_number":2,"coverage_pct":99.8},
             {"lap_number":12,"lap_time_s":112.450,"is_valid":false,"lap_kind":"IN_LAP","compound":"SOFT","stint_number":2,"coverage_pct":98.5},
             {"lap_number":13,"lap_time_s":104.120,"is_valid":false,"lap_kind":"OUT_LAP","compound":"SOFT","stint_number":3,"coverage_pct":99.1},
             {"lap_number":14,"lap_time_s":89.179,"is_valid":true,"lap_kind":"FLYING","compound":"SOFT","stint_number":3,"coverage_pct":100.0}
         ])";
-        return apex::gateway::HttpResponse{200, "application/json", data, {}};
+        return data_response(std::move(data), "embedded-fallback");
     });
 
     // 5. Race Control
-    server.route("GET", "/api/v1/sessions/9472/race-control", [](const apex::gateway::HttpRequest&) {
+    server.route("GET", "/api/v1/sessions/:session_key/race-control", [repository](const apex::gateway::HttpRequest& req) {
+        const auto session = parse_positive_integer(req.path_params.at("session_key"));
+        if (!session) return api_error(400, "INVALID_SESSION_KEY", "session_key must be a positive integer");
+        if (auto data = repository->race_control(*session)) return data_response(std::move(*data), "postgresql");
+        if (*session != 9472) return api_error(404, "SESSION_NOT_FOUND", "No race-control dataset is available for this session");
         std::string data = R"([
             {"occurred_at":"2024-03-01T16:02:10Z","category":"Flag","flag":"GREEN","message":"PIT EXIT OPEN - SESSION STARTED"},
             {"occurred_at":"2024-03-01T16:21:45Z","category":"Flag","flag":"YELLOW","message":"YELLOW FLAG IN SECTOR 2 - CAR 24 OFF TRACK TURN 8","sector":2},
             {"occurred_at":"2024-03-01T16:44:12Z","category":"DRS","flag":"DRS_ENABLED","message":"DRS ENABLED ZONES 1, 2, 3"},
             {"occurred_at":"2024-03-01T16:58:00Z","category":"Flag","flag":"CHEQUERED","message":"CHEQUERED FLAG - SESSION ENDED"}
         ])";
-        return apex::gateway::HttpResponse{200, "application/json", data, {}};
+        return data_response(std::move(data), "embedded-fallback");
     });
 
     // 6. Distance-based Telemetry Comparison Engine (Fase 3)
-    server.route("GET", "/api/v1/analysis/compare", [](const apex::gateway::HttpRequest&) {
-        // Gera comparação espacial em grade de 5 metros processada em C++23
-        std::string payload = generate_live_comparison(9472, 1, 14, 16, 15, 5.0);
+    server.route("GET", "/api/v1/analysis/compare", [](const apex::gateway::HttpRequest& req) {
+        const char* required[] = {"session_key", "ref_driver", "ref_lap", "comp_driver", "comp_lap"};
+        for (const auto* name : required) {
+            if (!req.query_params.contains(name)) return api_error(400, "MISSING_PARAMETER", std::string("Missing query parameter: ") + name);
+        }
+        auto session = parse_positive_integer(req.query_params.at("session_key"));
+        auto ref_driver = parse_positive_integer(req.query_params.at("ref_driver"));
+        auto ref_lap = parse_positive_integer(req.query_params.at("ref_lap"));
+        auto comp_driver = parse_positive_integer(req.query_params.at("comp_driver"));
+        auto comp_lap = parse_positive_integer(req.query_params.at("comp_lap"));
+        if (!session || !ref_driver || !ref_lap || !comp_driver || !comp_lap)
+            return api_error(422, "INVALID_PARAMETER", "Identifiers and lap numbers must be positive integers");
+        if (*session != 9472) return api_error(404, "SESSION_NOT_FOUND", "No telemetry dataset is available for this session");
+        if (*ref_driver == *comp_driver && *ref_lap == *comp_lap)
+            return api_error(422, "IDENTICAL_LAPS", "Reference and comparison laps must be different");
+
+        double step_m = 5.0;
+        if (const auto it = req.query_params.find("step_m"); it != req.query_params.end()) {
+            try {
+                size_t parsed = 0;
+                step_m = std::stod(it->second, &parsed);
+                if (parsed != it->second.size() || !std::isfinite(step_m) || step_m < 1.0 || step_m > 50.0)
+                    return api_error(422, "INVALID_GRID_STEP", "step_m must be between 1 and 50 meters");
+            } catch (...) {
+                return api_error(422, "INVALID_GRID_STEP", "step_m must be a finite number");
+            }
+        }
+        std::string payload = generate_live_comparison(*session, static_cast<int32_t>(*ref_driver), static_cast<int32_t>(*ref_lap), static_cast<int32_t>(*comp_driver), static_cast<int32_t>(*comp_lap), step_m);
         return apex::gateway::HttpResponse{200, "application/json", std::move(payload), {}};
     });
 

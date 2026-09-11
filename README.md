@@ -31,7 +31,7 @@ apex-telemetry/
 
 ---
 
-## Status da Implementação — Fase 1 Concluída
+## Status da Implementação — Fase 5 em andamento
 
 - [x] Monorepo estruturado com `pnpm`, `CMake` e `Cabal`.
 - [x] Design system sóbrio, preciso e escuro de instrumentação de telemetria (`@apex-telemetry/ui`).
@@ -45,7 +45,13 @@ apex-telemetry/
 - [x] Contratos formais OpenAPI 3.1, JSON Schema e TypeScript (`@apex-telemetry/contracts`).
 - [x] Algoritmos matemáticos de integração de distância e reamostragem espacial com 100% de cobertura de testes unitários (`vitest`).
 - [x] Infraestrutura Docker Compose com TimescaleDB, Redis, NATS, Prometheus e Grafana.
-- [x] Esqueletos de serviços C++23 e Haskell tipados e compiláveis.
+- [x] Ingestão histórica OpenF1 em C++23, com persistência raw/normalizada e endpoints REST.
+- [x] Motor numérico C++23 para integração de distância, grade espacial de 5 m e delta temporal.
+- [x] Motor Haskell de regras de domínio, classificação de voltas, degradação e insights explicáveis.
+- [x] Suítes automatizadas em Vitest, CTest e QuickCheck.
+- [x] Roteamento REST parametrizado, validação semântica e erros JSON previsíveis.
+- [x] Comparação reativa no dashboard: cada seleção consulta o motor C++ e preserva fallback auditado.
+- [x] Catálogo persistente PostgreSQL com upsert transacional na ingestão, consultas parametrizadas no Gateway e proveniência via HTTP.
 - [x] Documentação arquitetural completa e registros de decisão (ADR-001 a ADR-004).
 
 Para instruções detalhadas de como rodar e testar o projeto, consulte [docs/quickstart.md](docs/quickstart.md).

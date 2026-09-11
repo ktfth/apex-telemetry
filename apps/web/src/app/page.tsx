@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTelemetryStore } from '../store/telemetryStore';
 import { Header } from '../components/Header';
 import { LapSelector } from '../components/LapSelector';
@@ -9,7 +9,11 @@ import { InsightsPanel } from '../components/InsightsPanel';
 import { BottomPanel } from '../components/BottomPanel';
 
 export default function DashboardPage() {
-  const { leftPanelOpen, rightPanelOpen, bottomPanelOpen } = useTelemetryStore();
+  const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, refDriverNumber, refLapNumber, compDriverNumber, compLapNumber, refreshComparison } = useTelemetryStore();
+
+  useEffect(() => {
+    void refreshComparison();
+  }, [refDriverNumber, refLapNumber, compDriverNumber, compLapNumber, refreshComparison]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0a0c10]">

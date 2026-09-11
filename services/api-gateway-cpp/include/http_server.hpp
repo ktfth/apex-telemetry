@@ -13,6 +13,8 @@ struct HttpRequest {
     std::string method;
     std::string path;
     std::string query;
+    std::map<std::string, std::string> path_params;
+    std::map<std::string, std::string> query_params;
     std::map<std::string, std::string> headers;
     std::string body;
 };
@@ -38,11 +40,16 @@ public:
     int port() const { return port_; }
 
 private:
+    struct Route {
+        std::string method;
+        std::string pattern;
+        HttpHandler handler;
+    };
     int port_;
     int server_fd_{-1};
     std::atomic<bool> running_{false};
     std::vector<std::thread> worker_threads_;
-    std::map<std::string, HttpHandler> routes_;
+    std::vector<Route> routes_;
 
     void handle_client(int client_fd);
 };

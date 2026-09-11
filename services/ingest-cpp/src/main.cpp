@@ -2,6 +2,7 @@
 #include "http_client.hpp"
 #include "openf1_client.hpp"
 #include "storage.hpp"
+#include "postgres_storage.hpp"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -27,6 +28,7 @@ int main(int argc, char* argv[]) {
     }
 
     apex::ingest::IngestStorage storage("data");
+    apex::ingest::PostgreSQLStorage database;
 
     if (offline_mode) {
         std::cout << "[INFO] Initializing normalized storage in offline mode...\n";
@@ -35,6 +37,9 @@ int main(int argc, char* argv[]) {
             { 9473, "Race", "Race", 63, "Bahrain International Circuit", "Bahrain", "2024-03-02T15:00:00Z", 2024 }
         };
         storage.save_sessions(sessions);
+        if (database.configured() && !database.upsert_sessions(sessions)) {
+            std::cerr << "[WARN] PostgreSQL unavailable; normalized file remains the durable fallback.\n";
+        }
 
         std::vector<apex::ingest::DriverRecord> drivers = {
             { 9472, 1, "M VERSTAPPEN", "Max Verstappen", "VER", "Red Bull Racing", "#3671C6" },
@@ -43,6 +48,9 @@ int main(int argc, char* argv[]) {
             { 9472, 4, "L NORRIS", "Lando Norris", "NOR", "McLaren", "#FF8000" }
         };
         storage.save_drivers(9472, drivers);
+        if (database.configured() && !database.upsert_drivers(drivers)) {
+            std::cerr << "[WARN] Driver upsert failed; normalized file remains available.\n";
+        }
 
         std::cout << "[SUCCESS] Offline normalized session and driver data generated in data/normalized/\n";
         return 0;
@@ -56,6 +64,9 @@ int main(int argc, char* argv[]) {
     auto sessions = openf1.fetch_sessions(year, "Qualifying");
     if (!sessions.empty()) {
         storage.save_sessions(sessions);
+        if (database.configured() && !database.upsert_sessions(sessions)) {
+            std::cerr << "[WARN] Session upsert to PostgreSQL failed.\n";
+        }
         std::cout << "[SUCCESS] Ingested and saved " << sessions.size() << " sessions.\n";
     } else {
         std::cout << "[WARN] No sessions returned from live API, falling back to local cached session.\n";
@@ -65,6 +76,9 @@ int main(int argc, char* argv[]) {
     auto drivers = openf1.fetch_drivers(session_key);
     if (!drivers.empty()) {
         storage.save_drivers(session_key, drivers);
+        if (database.configured() && !database.upsert_drivers(drivers)) {
+            std::cerr << "[WARN] Driver upsert to PostgreSQL failed.\n";
+        }
         std::cout << "[SUCCESS] Ingested and saved " << drivers.size() << " drivers.\n";
     }
 

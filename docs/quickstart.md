@@ -25,6 +25,13 @@ Verifique a saúde dos serviços:
 - **Prometheus**: `localhost:9090`
 - **Grafana**: `localhost:3001` (login `admin` / `apex_admin`)
 
+Configure os serviços nativos para usar o banco:
+```bash
+export APEX_DATABASE_URL='postgresql://apex_user:apex_secure_pass@localhost:5432/apex_telemetry'
+```
+
+Sem essa variável, ou se o PostgreSQL estiver indisponível, o Gateway usa os arquivos normalizados e identifica a origem no cabeçalho `X-Apex-Data-Source`.
+
 ---
 
 ## 3. Ingestão e API Gateway C++23
@@ -33,6 +40,7 @@ Verifique a saúde dos serviços:
 ```bash
 cmake -B build -S .
 cmake --build build
+ctest --test-dir build --output-on-failure
 ```
 Executáveis gerados:
 - `build/services/api-gateway-cpp/apex_api_gateway`
@@ -58,6 +66,9 @@ Endpoints disponíveis:
 - `GET http://localhost:8080/api/v1/sessions/9472/drivers`
 - `GET http://localhost:8080/api/v1/sessions/9472/laps`
 - `GET http://localhost:8080/api/v1/sessions/9472/race-control`
+- `GET http://localhost:8080/api/v1/analysis/compare?session_key=9472&ref_driver=1&ref_lap=14&comp_driver=16&comp_lap=15&step_m=5`
+
+O endpoint de comparação valida todos os identificadores e aceita grades espaciais entre 1 e 50 metros. Respostas inválidas usam um envelope JSON estável com `error` e `code`.
 
 ---
 
@@ -92,5 +103,6 @@ O frontend detectará automaticamente se o `apex_api_gateway` está online na po
 ```bash
 cd services/strategy-hs
 cabal build
+cabal test
 cabal run strategy-hs
 ```

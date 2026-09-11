@@ -1,6 +1,14 @@
 import { create } from 'zustand';
+import type { LapComparison } from '@apex-telemetry/contracts';
+import { DEMO_LAP_COMPARISON } from '../fixtures/demoBahrain2024';
+import { fetchLapComparison } from '../lib/apiClient';
 
 interface TelemetryState {
+  comparison: LapComparison;
+  comparisonSource: 'api' | 'demo';
+  comparisonLoading: boolean;
+  comparisonRequestId: number;
+  refreshComparison: () => Promise<void>;
   // Cursor e sincronização espacial
   hoveredDistanceM: number | null;
   setHoveredDistanceM: (dist: number | null) => void;
@@ -31,6 +39,32 @@ interface TelemetryState {
 }
 
 export const useTelemetryStore = create<TelemetryState>((set) => ({
+  comparison: DEMO_LAP_COMPARISON,
+  comparisonSource: 'demo',
+  comparisonLoading: false,
+  comparisonRequestId: 0,
+  refreshComparison: async () => {
+    let requestId = 0;
+    let selection = { session: 9472, refDriver: 1, refLap: 14, compDriver: 16, compLap: 15 };
+    set((state) => {
+      requestId = state.comparisonRequestId + 1;
+      selection = {
+        session: 9472,
+        refDriver: state.refDriverNumber,
+        refLap: state.refLapNumber,
+        compDriver: state.compDriverNumber,
+        compLap: state.compLapNumber
+      };
+      return { comparisonLoading: true, comparisonRequestId: requestId };
+    });
+    const result = await fetchLapComparison(selection.session, selection.refDriver, selection.refLap, selection.compDriver, selection.compLap);
+    set((state) => state.comparisonRequestId === requestId ? {
+      comparison: result.data,
+      comparisonSource: result.isFromApi ? 'api' : 'demo',
+      comparisonLoading: false,
+      activeInsightId: result.data.insights[0]?.id ?? null
+    } : state);
+  },
   hoveredDistanceM: null,
   setHoveredDistanceM: (dist) => set({ hoveredDistanceM: dist }),
 

@@ -2,13 +2,11 @@
 
 import React from 'react';
 import { useTelemetryStore } from '../store/telemetryStore';
-import { DEMO_LAP_COMPARISON } from '../fixtures/demoBahrain2024';
 import { CircuitMap } from './CircuitMap';
 import { FileText, CheckCircle2, AlertTriangle, HelpCircle, ShieldCheck } from 'lucide-react';
 
 export const InsightsPanel: React.FC = () => {
-  const { activeInsightId, setActiveInsightId, setHoveredDistanceM } = useTelemetryStore();
-  const comparison = DEMO_LAP_COMPARISON;
+  const { activeInsightId, setActiveInsightId, setHoveredDistanceM, comparison } = useTelemetryStore();
   const insights = comparison.insights;
   const audit = comparison.quality_audit;
 

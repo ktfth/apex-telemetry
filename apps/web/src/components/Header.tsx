@@ -43,7 +43,7 @@ export const Header: React.FC = () => {
             Apex<span className="text-sky-400">Telemetry</span>
           </span>
           <span className="text-[10px] font-mono px-1.5 py-0.5 bg-[#161b24] text-neutral-400 border border-[#232936]">
-            v1.3.0-fase3
+            v1.5.0-fase5
           </span>
         </div>
 

@@ -193,6 +193,15 @@ std::string SpatialAlignmentEngine::build_comparison_json(
     const std::vector<TelemetrySegment>& segments,
     const QualityMetrics& quality
 ) {
+    const auto driver_code = [](int32_t number) -> const char* {
+        switch (number) {
+            case 1: return "VER";
+            case 4: return "NOR";
+            case 16: return "LEC";
+            case 44: return "HAM";
+            default: return "DRV";
+        }
+    };
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(3);
 
@@ -205,7 +214,7 @@ std::string SpatialAlignmentEngine::build_comparison_json(
         << "  \"total_distance_m\": " << total_distance_m << ",\n"
         << "  \"reference_lap\": {\n"
         << "    \"driver_number\": " << ref_driver << ",\n"
-        << "    \"driver_code\": \"VER\",\n"
+        << "    \"driver_code\": \"" << driver_code(ref_driver) << "\",\n"
         << "    \"lap_number\": " << ref_lap << ",\n"
         << "    \"lap_time_s\": 89.179,\n"
         << "    \"compound\": \"SOFT\",\n"
@@ -215,7 +224,7 @@ std::string SpatialAlignmentEngine::build_comparison_json(
         << "  },\n"
         << "  \"comparison_lap\": {\n"
         << "    \"driver_number\": " << comp_driver << ",\n"
-        << "    \"driver_code\": \"LEC\",\n"
+        << "    \"driver_code\": \"" << driver_code(comp_driver) << "\",\n"
         << "    \"lap_number\": " << comp_lap << ",\n"
         << "    \"lap_time_s\": 89.407,\n"
         << "    \"compound\": \"SOFT\",\n"
@@ -246,7 +255,7 @@ std::string SpatialAlignmentEngine::build_comparison_json(
         const auto& s = segments[i];
         oss << "    {\n"
             << "      \"id\": \"" << s.id << "\",\n"
-            << "      \"driver_code\": \"LEC\",\n"
+            << "      \"driver_code\": \"" << driver_code(comp_driver) << "\",\n"
             << "      \"distance_start_m\": " << s.distance_start_m << ",\n"
             << "      \"distance_end_m\": " << s.distance_end_m << ",\n"
             << "      \"time_loss_s\": " << s.time_loss_s << ",\n"

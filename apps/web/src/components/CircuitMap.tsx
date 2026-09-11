@@ -3,15 +3,14 @@
 import React from 'react';
 import { useTelemetryStore } from '../store/telemetryStore';
 import {
-  BAHRAIN_CIRCUIT_COORDS,
-  DEMO_LAP_COMPARISON
+  BAHRAIN_CIRCUIT_COORDS
 } from '../fixtures/demoBahrain2024';
 import { MapPin } from 'lucide-react';
 
 export const CircuitMap: React.FC = () => {
-  const { hoveredDistanceM, setHoveredDistanceM, activeInsightId } = useTelemetryStore();
+  const { hoveredDistanceM, setHoveredDistanceM, activeInsightId, comparison } = useTelemetryStore();
   const coords = BAHRAIN_CIRCUIT_COORDS;
-  const totalDistance = DEMO_LAP_COMPARISON.total_distance_m;
+  const totalDistance = comparison.total_distance_m;
   const activeDistance = hoveredDistanceM !== null ? hoveredDistanceM : 1550;
 
   // Interpola a posição do cursor (X, Y) na pista

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include <cctype>
 
 namespace apex::gateway {
 
@@ -16,7 +17,52 @@ HttpServer::~HttpServer() {
 }
 
 void HttpServer::route(const std::string& method, const std::string& path_prefix, HttpHandler handler) {
-    routes_[method + ":" + path_prefix] = std::move(handler);
+    routes_.push_back({method, path_prefix, std::move(handler)});
+}
+
+namespace {
+std::vector<std::string> split_path(const std::string& value) {
+    std::vector<std::string> parts;
+    std::stringstream stream(value);
+    std::string part;
+    while (std::getline(stream, part, '/')) if (!part.empty()) parts.push_back(part);
+    return parts;
+}
+
+std::string url_decode(const std::string& value) {
+    std::string result;
+    for (size_t i = 0; i < value.size(); ++i) {
+        if (value[i] == '+' ) result.push_back(' ');
+        else if (value[i] == '%' && i + 2 < value.size() && std::isxdigit(value[i + 1]) && std::isxdigit(value[i + 2])) {
+            result.push_back(static_cast<char>(std::stoi(value.substr(i + 1, 2), nullptr, 16)));
+            i += 2;
+        } else result.push_back(value[i]);
+    }
+    return result;
+}
+
+std::map<std::string, std::string> parse_query(const std::string& query) {
+    std::map<std::string, std::string> params;
+    std::stringstream stream(query);
+    std::string pair;
+    while (std::getline(stream, pair, '&')) {
+        const auto pos = pair.find('=');
+        const auto key = url_decode(pair.substr(0, pos));
+        if (!key.empty()) params[key] = pos == std::string::npos ? "" : url_decode(pair.substr(pos + 1));
+    }
+    return params;
+}
+
+bool match_route(const std::string& pattern, const std::string& path, std::map<std::string, std::string>& params) {
+    const auto expected = split_path(pattern);
+    const auto actual = split_path(path);
+    if (expected.size() != actual.size()) return false;
+    for (size_t i = 0; i < expected.size(); ++i) {
+        if (!expected[i].empty() && expected[i][0] == ':') params[expected[i].substr(1)] = url_decode(actual[i]);
+        else if (expected[i] != actual[i]) return false;
+    }
+    return true;
+}
 }
 
 void HttpServer::start(bool block) {
@@ -125,16 +171,15 @@ void HttpServer::handle_client(int client_fd) {
     req.method = method;
     req.path = path;
     req.query = query;
+    req.query_params = parse_query(query);
 
     // Encontra rota correspondente
     HttpResponse res{404, "application/json", R"({"error": "Route not found", "code": "NOT_FOUND"})", {}};
-    for (const auto& [route_key, handler] : routes_) {
-        auto colon = route_key.find(':');
-        std::string r_method = route_key.substr(0, colon);
-        std::string r_prefix = route_key.substr(colon + 1);
-
-        if (r_method == method && path.rfind(r_prefix, 0) == 0) {
-            res = handler(req);
+    for (const auto& route : routes_) {
+        std::map<std::string, std::string> path_params;
+        if (route.method == method && match_route(route.pattern, path, path_params)) {
+            req.path_params = std::move(path_params);
+            res = route.handler(req);
             break;
         }
     }
@@ -145,8 +190,9 @@ void HttpServer::handle_client(int client_fd) {
         << "Content-Length: " << res.body.size() << "\r\n"
         << "Access-Control-Allow-Origin: *\r\n"
         << "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-        << "Connection: close\r\n\r\n"
-        << res.body;
+        << "Access-Control-Expose-Headers: X-Apex-Data-Source\r\n";
+    for (const auto& [name, value] : res.headers) oss << name << ": " << value << "\r\n";
+    oss << "Connection: close\r\n\r\n" << res.body;
 
     std::string out = oss.str();
     write(client_fd, out.data(), out.size());

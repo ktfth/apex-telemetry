@@ -2,12 +2,10 @@
 
 import React, { useRef, useCallback } from 'react';
 import { useTelemetryStore } from '../store/telemetryStore';
-import { DEMO_LAP_COMPARISON } from '../fixtures/demoBahrain2024';
 import { MetricInstrument } from '@apex-telemetry/ui';
 
 export const TelemetryPlots: React.FC = () => {
-  const { hoveredDistanceM, setHoveredDistanceM, activeInsightId } = useTelemetryStore();
-  const comparison = DEMO_LAP_COMPARISON;
+  const { hoveredDistanceM, setHoveredDistanceM, activeInsightId, comparison } = useTelemetryStore();
   const channels = comparison.channels;
   const totalDistance = comparison.total_distance_m;
 

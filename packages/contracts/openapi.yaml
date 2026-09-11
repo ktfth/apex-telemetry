@@ -49,23 +49,24 @@ paths:
                 items:
                   $ref: '#/components/schemas/Driver'
 
-  /sessions/{session_key}/drivers/{driver_number}/laps:
+  /sessions/{session_key}/laps:
     get:
-      summary: Lista voltas do piloto com classificação formal
+      summary: Lista voltas da sessão, opcionalmente filtradas por piloto
       parameters:
         - name: session_key
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
         - name: driver_number
-          in: path
-          required: true
-          schema:
-            type: integer
+          in: query
+          required: false
+          schema: { type: integer }
       responses:
         '200':
-          description: Voltas do piloto
+          description: Voltas normalizadas
+          headers:
+            X-Apex-Data-Source:
+              schema: { type: string }
           content:
             application/json:
               schema:

@@ -17,7 +17,10 @@ export const LapSelector: React.FC = () => {
     compDriverNumber,
     compLapNumber,
     setRefSelection,
-    setCompSelection
+    setCompSelection,
+    comparison,
+    comparisonSource,
+    comparisonLoading
   } = useTelemetryStore();
 
   const refDriver = DEMO_DRIVERS.find((d) => d.driver_number === refDriverNumber) || DEMO_DRIVERS[0];
@@ -146,11 +149,11 @@ export const LapSelector: React.FC = () => {
           Delta Oficial de Tempo
         </div>
         <div className="flex items-baseline justify-between">
-          <span className="text-neutral-400">VER L14 vs LEC L15:</span>
-          <span className="text-rose-400 font-bold tabular-nums">+0.228 s</span>
+          <span className="text-neutral-400">{comparison.reference_lap.driver_code} L{comparison.reference_lap.lap_number} vs {comparison.comparison_lap.driver_code} L{comparison.comparison_lap.lap_number}:</span>
+          <span className="text-rose-400 font-bold tabular-nums">{comparisonLoading ? '…' : `${comparison.comparison_lap.lap_time_s - comparison.reference_lap.lap_time_s >= 0 ? '+' : ''}${(comparison.comparison_lap.lap_time_s - comparison.reference_lap.lap_time_s).toFixed(3)} s`}</span>
         </div>
         <div className="text-[10px] text-neutral-500 mt-1">
-          Cobertura: 100.0% vs 99.4% (1083 nós)
+          Cobertura: {comparison.reference_lap.coverage_pct.toFixed(1)}% vs {comparison.comparison_lap.coverage_pct.toFixed(1)}% ({comparison.channels.length} nós) · {comparisonSource.toUpperCase()}
         </div>
       </div>
     </aside>
