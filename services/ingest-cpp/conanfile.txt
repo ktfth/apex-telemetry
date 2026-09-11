@@ -1,0 +1,12 @@
+[requires]
+spdlog/1.15.1
+fmt/11.1.4
+simdjson/3.12.3
+libcurl/8.12.1
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[layout]
+cmake_layout

@@ -1,0 +1,32 @@
+cabal-version:      2.4
+name:               strategy-hs
+version:            1.0.0
+synopsis:           Domain rules and explainable insights engine for ApexTelemetry
+license:            NONE
+author:             ApexTelemetry Engineering
+maintainer:         eng@apex-telemetry.io
+
+library
+    exposed-modules:
+        Apex.Domain.Types
+        Apex.Domain.Rules
+    build-depends:
+        base >=4.14 && <5,
+        text,
+        aeson,
+        time,
+        containers
+    hs-source-dirs:   src
+    default-language: Haskell2010
+    default-extensions:
+        OverloadedStrings
+        DeriveGeneric
+        StrictData
+
+executable strategy-hs
+    main-is:          Main.hs
+    build-depends:
+        base >=4.14 && <5,
+        strategy-hs
+    hs-source-dirs:   app
+    default-language: Haskell2010

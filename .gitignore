@@ -1,0 +1,32 @@
+# Node & Frontend
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# C++ & CMake
+build/
+build-*/
+CMakeUserPresets.json
+conan.lock
+.conan/
+
+# Haskell & Cabal
+dist-newstyle/
+.cabal-sandbox/
+cabal.sandbox.config
+*.o
+*.hi
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

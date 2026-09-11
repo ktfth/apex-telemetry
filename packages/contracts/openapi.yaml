@@ -1,0 +1,191 @@
+openapi: 3.1.0
+info:
+  title: ApexTelemetry High-Precision Engineering API
+  version: 1.0.0
+  description: API REST e WebSocket para análise de telemetria de Fórmula 1 em alta precisão.
+servers:
+  - url: http://localhost:8080/api/v1
+    description: API Gateway Local Drogon (C++23)
+paths:
+  /sessions:
+    get:
+      summary: Lista sessões de telemetria disponíveis
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+            example: 2024
+        - name: circuit_key
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de sessões recuperada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+
+  /sessions/{session_key}/drivers:
+    get:
+      summary: Lista pilotos participantes da sessão
+      parameters:
+        - name: session_key
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de pilotos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Driver'
+
+  /sessions/{session_key}/drivers/{driver_number}/laps:
+    get:
+      summary: Lista voltas do piloto com classificação formal
+      parameters:
+        - name: session_key
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: driver_number
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Voltas do piloto
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lap'
+
+  /analysis/compare:
+    get:
+      summary: Compara duas voltas com reamostragem espacial por distância
+      parameters:
+        - name: session_key
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: ref_driver
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: ref_lap
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: comp_driver
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: comp_lap
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: step_m
+          in: query
+          required: false
+          schema:
+            type: number
+            default: 5.0
+      responses:
+        '200':
+          description: Comparação de telemetria alinhada por distância
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LapComparison'
+
+  /sessions/{session_key}/race-control:
+    get:
+      summary: Eventos de direção de prova e bandeiras
+      parameters:
+        - name: session_key
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Eventos de corrida
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RaceControlEvent'
+
+components:
+  schemas:
+    Session:
+      type: object
+      required: [session_key, session_name, session_type, circuit_key, circuit_name, country_name, date_start, year]
+      properties:
+        session_key: { type: integer }
+        session_name: { type: string }
+        session_type: { type: string }
+        circuit_key: { type: integer }
+        circuit_name: { type: string }
+        country_name: { type: string }
+        date_start: { type: string, format: date-time }
+        year: { type: integer }
+
+    Driver:
+      type: object
+      required: [driver_number, broadcast_name, full_name, name_acronym, team_name, team_colour]
+      properties:
+        driver_number: { type: integer }
+        broadcast_name: { type: string }
+        full_name: { type: string }
+        name_acronym: { type: string }
+        team_name: { type: string }
+        team_colour: { type: string }
+
+    Lap:
+      type: object
+      required: [lap_number, lap_time_s, is_valid, lap_kind, compound, stint_number, coverage_pct]
+      properties:
+        lap_number: { type: integer }
+        lap_time_s: { type: number }
+        is_valid: { type: boolean }
+        lap_kind: { type: string, enum: [FLYING, OUT_LAP, IN_LAP, INVALID, SAFETY_CAR] }
+        compound: { type: string, enum: [SOFT, MEDIUM, HARD, INTERMEDIATE, WET, UNKNOWN] }
+        stint_number: { type: integer }
+        sector_1_s: { type: number }
+        sector_2_s: { type: number }
+        sector_3_s: { type: number }
+        coverage_pct: { type: number }
+
+    RaceControlEvent:
+      type: object
+      required: [occurred_at, category, flag, message]
+      properties:
+        occurred_at: { type: string, format: date-time }
+        category: { type: string }
+        flag: { type: string }
+        message: { type: string }
+        sector: { type: integer, nullable: true }
+        driver_number: { type: integer, nullable: true }
+
+    LapComparison:
+      $ref: './schemas/lap-comparison.json'

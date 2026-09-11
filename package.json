@@ -1,0 +1,17 @@
+{
+  "name": "apex-telemetry-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @apex-telemetry/web dev",
+    "build": "pnpm --filter \"@apex-telemetry/*\" build",
+    "lint": "pnpm --filter \"@apex-telemetry/*\" lint",
+    "test": "pnpm --filter \"@apex-telemetry/*\" test",
+    "typecheck": "pnpm --filter \"@apex-telemetry/*\" typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "prettier": "^3.5.0"
+  },
+  "packageManager": "pnpm@12.3.4"
+}
