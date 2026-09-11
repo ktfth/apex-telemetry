@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTelemetryStore } from '../store/telemetryStore';
-import { DEMO_SOURCE_INFO } from '../fixtures/demoBahrain2024';
-import { PanelLeft, PanelRight, PanelBottom, ShieldAlert, Cpu } from 'lucide-react';
+import { checkApiHealth, ApiStatus } from '../lib/apiClient';
+import { PanelLeft, PanelRight, PanelBottom, ShieldAlert, Cpu, Activity } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const {
@@ -15,6 +15,24 @@ export const Header: React.FC = () => {
     toggleBottomPanel
   } = useTelemetryStore();
 
+  const [apiStatus, setApiStatus] = useState<ApiStatus>({ online: false });
+
+  useEffect(() => {
+    let mounted = true;
+    const probe = async () => {
+      const status = await checkApiHealth();
+      if (mounted) {
+        setApiStatus(status);
+      }
+    };
+    probe();
+    const interval = setInterval(probe, 8000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <header className="h-12 border-b border-[#212836] bg-[#0c0e12] px-4 flex items-center justify-between select-none shrink-0 z-30">
       {/* Brand & Session Context */}
@@ -25,7 +43,7 @@ export const Header: React.FC = () => {
             Apex<span className="text-sky-400">Telemetry</span>
           </span>
           <span className="text-[10px] font-mono px-1.5 py-0.5 bg-[#161b24] text-neutral-400 border border-[#232936]">
-            v1.0.0-fase1
+            v1.1.0-fase2
           </span>
         </div>
 
@@ -43,17 +61,29 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Identificação Explícita de Dados e Qualidade */}
+      {/* Indicadores de Origem, Backend C++ e Qualidade */}
       <div className="flex items-center space-x-3">
-        <div
-          className="flex items-center space-x-1.5 px-2 py-1 bg-amber-950/30 border border-amber-800/60 text-amber-300 font-mono text-[10px]"
-          title="Dados de teste e demonstração devidamente identificados como sintéticos baseados em OpenF1."
-        >
-          <ShieldAlert className="w-3 h-3 text-amber-400" />
-          <span>FIXTURE DEMO SINTÉTICA</span>
-          <span className="text-amber-500">|</span>
-          <span>OpenF1 Sakhir 10Hz</span>
-        </div>
+        {apiStatus.online ? (
+          <div
+            className="flex items-center space-x-1.5 px-2 py-1 bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 font-mono text-[10px]"
+            title="Conectado diretamente ao api-gateway-cpp (C++23) e base normalizada."
+          >
+            <Activity className="w-3 h-3 text-emerald-400 animate-pulse" />
+            <span className="font-bold">API GATEWAY C++23 [ONLINE]</span>
+            <span className="text-emerald-600">|</span>
+            <span>{apiStatus.latencyMs}ms</span>
+          </div>
+        ) : (
+          <div
+            className="flex items-center space-x-1.5 px-2 py-1 bg-amber-950/30 border border-amber-800/60 text-amber-300 font-mono text-[10px]"
+            title="API Gateway local offline. Operando em modo de demonstração com fixture auditada do GP do Bahrein 2024."
+          >
+            <ShieldAlert className="w-3 h-3 text-amber-400" />
+            <span>STANDALONE DEMO</span>
+            <span className="text-amber-500">|</span>
+            <span>OpenF1 Sakhir 10Hz</span>
+          </div>
+        )}
 
         <div className="flex items-center space-x-1 px-2 py-1 bg-[#12161c] border border-[#212836] font-mono text-[10px] text-neutral-400">
           <Cpu className="w-3 h-3 text-sky-400" />

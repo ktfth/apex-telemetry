@@ -1,0 +1,34 @@
+[
+  {
+    "driver_number": 1,
+    "broadcast_name": "M VERSTAPPEN",
+    "full_name": "Max Verstappen",
+    "name_acronym": "VER",
+    "team_name": "Red Bull Racing",
+    "team_colour": "#3671C6"
+  },
+  {
+    "driver_number": 16,
+    "broadcast_name": "C LECLERC",
+    "full_name": "Charles Leclerc",
+    "name_acronym": "LEC",
+    "team_name": "Scuderia Ferrari",
+    "team_colour": "#E8002D"
+  },
+  {
+    "driver_number": 44,
+    "broadcast_name": "L HAMILTON",
+    "full_name": "Lewis Hamilton",
+    "name_acronym": "HAM",
+    "team_name": "Mercedes-AMG",
+    "team_colour": "#27F4D2"
+  },
+  {
+    "driver_number": 4,
+    "broadcast_name": "L NORRIS",
+    "full_name": "Lando Norris",
+    "name_acronym": "NOR",
+    "team_name": "McLaren",
+    "team_colour": "#FF8000"
+  }
+]

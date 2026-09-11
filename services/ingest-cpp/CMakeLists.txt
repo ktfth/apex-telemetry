@@ -5,22 +5,25 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(spdlog REQUIRED)
-find_package(fmt REQUIRED)
-find_package(simdjson REQUIRED)
 find_package(CURL REQUIRED)
 
 add_executable(apex_ingest
     src/main.cpp
+    src/http_client.cpp
+    src/openf1_client.cpp
+    src/storage.cpp
+    ../common/simdjson/simdjson.cpp
+)
+
+target_include_directories(apex_ingest PRIVATE
+    include
+    ../common/simdjson
 )
 
 target_link_libraries(apex_ingest PRIVATE
-    spdlog::spdlog
-    fmt::fmt
-    simdjson::simdjson
     CURL::libcurl
 )
 
 target_compile_options(apex_ingest PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion
+    -Wall -Wextra -Wpedantic
 )
