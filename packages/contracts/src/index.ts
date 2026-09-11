@@ -1,6 +1,6 @@
 /**
  * ApexTelemetry — Core Data Contracts
- * Schema Version: 1.0.0
+ * Schema Version: 1.1.0
  */
 
 export type LapKind = 'FLYING' | 'OUT_LAP' | 'IN_LAP' | 'INVALID' | 'SAFETY_CAR';
@@ -68,6 +68,24 @@ export interface LapSummaryHeader {
   samples_count: number;
 }
 
+export interface SpeedTrap {
+  name: string;
+  distance_m: number;
+  ref_speed_kmh: number;
+  comp_speed_kmh: number;
+  delta_kmh: number;
+}
+
+export interface Microsector {
+  index: number;
+  distance_start_m: number;
+  distance_end_m: number;
+  delta_s: number;
+  ref_avg_speed_kmh: number;
+  comp_avg_speed_kmh: number;
+  winner: 'REF' | 'COMP' | 'EQUAL';
+}
+
 export interface InsightEvidence {
   min_speed_ref_kmh: number;
   min_speed_comp_kmh: number;
@@ -94,11 +112,12 @@ export interface QualityAudit {
   max_interpolation_gap_m: number;
   discontinuous_segments: number;
   confidence_score: number;
+  coverage_pct?: number;
   source_notes: string;
 }
 
 export interface LapComparison {
-  schema_version: '1.0.0';
+  schema_version: '1.0.0' | '1.1.0';
   session_key: number;
   circuit_key: number;
   circuit_name: string;
@@ -106,6 +125,8 @@ export interface LapComparison {
   total_distance_m: number;
   reference_lap: LapSummaryHeader;
   comparison_lap: LapSummaryHeader;
+  speed_traps?: SpeedTrap[];
+  microsectors?: Microsector[];
   channels: AlignedChannelPoint[];
   insights: Insight[];
   quality_audit: QualityAudit;

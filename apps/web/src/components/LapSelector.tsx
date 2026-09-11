@@ -155,6 +155,26 @@ export const LapSelector: React.FC = () => {
         <div className="text-[10px] text-neutral-500 mt-1">
           Cobertura: {comparison.reference_lap.coverage_pct.toFixed(1)}% vs {comparison.comparison_lap.coverage_pct.toFixed(1)}% ({comparison.channels.length} nós) · {comparisonSource.toUpperCase()}
         </div>
+
+        {/* Export Options (Fase 6) */}
+        <div className="mt-2 pt-2 border-t border-[#1a202c] flex items-center space-x-2">
+          <a
+            href={`http://localhost:8080/api/v1/analysis/export?format=motec_csv&ref_driver=${refDriverNumber}&comp_driver=${compDriverNumber}`}
+            download="apex_telemetry_motec.csv"
+            className="flex-1 text-center py-1 bg-[#161b24] hover:bg-[#202634] text-sky-400 border border-[#232936] text-[10px] uppercase font-bold tracking-wider transition-colors"
+            title="Exportar dados alinhados no padrão MoTeC CSV de telemetria"
+          >
+            Export MoTeC CSV
+          </a>
+          <a
+            href={`http://localhost:8080/api/v1/analysis/export?format=json&ref_driver=${refDriverNumber}&comp_driver=${compDriverNumber}`}
+            download="apex_telemetry_export.json"
+            className="flex-1 text-center py-1 bg-[#161b24] hover:bg-[#202634] text-neutral-300 border border-[#232936] text-[10px] uppercase font-bold tracking-wider transition-colors"
+            title="Exportar dados estruturados em JSON"
+          >
+            Export JSON
+          </a>
+        </div>
       </div>
     </aside>
   );

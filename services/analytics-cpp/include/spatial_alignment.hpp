@@ -54,6 +54,24 @@ struct TelemetrySegment {
     double confidence{0.90};
 };
 
+struct Microsector {
+    int32_t index{0};
+    double distance_start_m{0.0};
+    double distance_end_m{0.0};
+    double delta_s{0.0};
+    double ref_avg_speed_kmh{0.0};
+    double comp_avg_speed_kmh{0.0};
+    std::string winner{"REF"};
+};
+
+struct SpeedTrap {
+    std::string name;
+    double distance_m{0.0};
+    double ref_speed_kmh{0.0};
+    double comp_speed_kmh{0.0};
+    double delta_kmh{0.0};
+};
+
 struct QualityMetrics {
     double max_interpolation_gap_m{0.0};
     int32_t discontinuous_segments{0};
@@ -97,6 +115,21 @@ public:
     );
 
     /**
+     * Divide a volta em microsetores regulares (ex: 100m) e avalia o delta local.
+     */
+    static std::vector<Microsector> compute_microsectors(
+        const std::vector<ComparisonChannelPoint>& channels,
+        double microsector_len_m = 100.0
+    );
+
+    /**
+     * Calcula velocidades nos Speed Traps oficiais (I1, I2, Finish Line Trap).
+     */
+    static std::vector<SpeedTrap> compute_speed_traps(
+        const std::vector<ComparisonChannelPoint>& channels
+    );
+
+    /**
      * Audita a integridade espacial e calcula métricas de qualidade.
      */
     static QualityMetrics compute_quality_audit(
@@ -105,7 +138,17 @@ public:
     );
 
     /**
-     * Gera payload JSON completo conforme contrato lap-comparison.json.
+     * Exporta telemetria alinhada no formato padrão MoTeC CSV (Time, Distance, Speed, etc.).
+     */
+    static std::string export_motec_csv(
+        const std::string& session_name,
+        int32_t ref_driver,
+        int32_t comp_driver,
+        const std::vector<ComparisonChannelPoint>& channels
+    );
+
+    /**
+     * Gera payload JSON completo conforme contrato lap-comparison.json enriquecido.
      */
     static std::string build_comparison_json(
         int64_t session_key,

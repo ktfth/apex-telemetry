@@ -63,6 +63,19 @@ prop_constantLapTimesZeroDeg (Positive t) =
       deg = calculateLinearDegradation ltimes
   in abs deg < 0.0001
 
+-- | 6. Invariante de Degradação Preditiva Monotônica: mais voltas de uso geram perda de ritmo maior ou igual
+prop_tyreDegradationMonotonic :: Positive Int -> Positive Double -> Bool
+prop_tyreDegradationMonotonic (Positive laps) (Positive temp) =
+  let loss1 = predictTyrePaceLoss Soft laps (temp + 20.0)
+      loss2 = predictTyrePaceLoss Soft (laps + 1) (temp + 20.0)
+  in loss2 >= loss1
+
+-- | 7. Invariante de Durabilidade de Compostos: Hard tem cliff estritamente maior que Medium e Soft
+prop_hardCompoundLastsLongerThanSoft :: Bool
+prop_hardCompoundLastsLongerThanSoft =
+  tyreCliffLap Hard > tyreCliffLap Medium &&
+  tyreCliffLap Medium > tyreCliffLap Soft
+
 main :: IO ()
 main = do
   putStrLn "=== APEX STRATEGY-HS PROPERTY-BASED TESTS (QUICKCHECK) ==="
@@ -72,11 +85,13 @@ main = do
   r3 <- quickCheckResult prop_stintNonOverlap
   r4 <- quickCheckResult prop_insightContainsEvidence
   r5 <- quickCheckResult prop_constantLapTimesZeroDeg
+  r6 <- quickCheckResult prop_tyreDegradationMonotonic
+  r7 <- quickCheckResult (property prop_hardCompoundLastsLongerThanSoft)
 
-  let allPassed = all isSuccess [r1, r2, r3, r4, r5]
+  let allPassed = all isSuccess [r1, r2, r3, r4, r5, r6, r7]
   if allPassed
     then do
-      putStrLn "\nAll 5 Domain Property Tests Passed Successfully!"
+      putStrLn "\nAll 7 Domain Property Tests Passed Successfully!"
       exitSuccess
     else do
       putStrLn "\nProperty Tests Failed!"

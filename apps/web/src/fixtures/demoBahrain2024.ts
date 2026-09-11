@@ -300,6 +300,22 @@ export const DEMO_LAP_COMPARISON: LapComparison = {
     coverage_pct: 99.4,
     samples_count: DEMO_CHANNELS.length
   },
+  speed_traps: [
+    { name: "Turn 1 Entry (Main Straight)", distance_m: 650.0, ref_speed_kmh: 315.0, comp_speed_kmh: 313.0, delta_kmh: -2.0 },
+    { name: "Sector 1 Trap (T4)", distance_m: 1550.0, ref_speed_kmh: 118.2, comp_speed_kmh: 111.4, delta_kmh: -6.8 },
+    { name: "Intermediate 1 (T8)", distance_m: 2750.0, ref_speed_kmh: 245.0, comp_speed_kmh: 242.0, delta_kmh: -3.0 },
+    { name: "Sector 2 Trap (T10)", distance_m: 3350.0, ref_speed_kmh: 82.0, comp_speed_kmh: 79.0, delta_kmh: -3.0 },
+    { name: "Main Speed Trap (Finish)", distance_m: 5200.0, ref_speed_kmh: 322.0, comp_speed_kmh: 320.5, delta_kmh: -1.5 }
+  ],
+  microsectors: Array.from({ length: 55 }, (_, i) => ({
+    index: i,
+    distance_start_m: i * 100,
+    distance_end_m: Math.min((i + 1) * 100, 5412),
+    delta_s: (i >= 14 && i <= 17) ? 0.06 : (i % 2 === 0 ? 0.005 : -0.002),
+    ref_avg_speed_kmh: 250 + 40 * Math.sin(i / 5),
+    comp_avg_speed_kmh: 248 + 38 * Math.sin(i / 5),
+    winner: (i >= 14 && i <= 17) ? 'REF' as const : (i % 3 === 0 ? 'COMP' as const : 'REF' as const)
+  })),
   channels: DEMO_CHANNELS,
   insights: [
     {

@@ -45,6 +45,40 @@ calculateLinearDegradation times
     numer = sum $ zipWith (\x y -> (x - meanX) * (y - meanY)) xs times
     denom = sum $ map (\x -> (x - meanX) * (x - meanX)) xs
 
+-- | Modelo preditivo não-linear de degradação térmica e mecânica de pneus (Fase 6)
+-- Retorna a perda esperada de tempo em segundos em função do composto, voltas de uso e temperatura
+predictTyrePaceLoss :: TyreCompound -> Int -> Double -> Double
+predictTyrePaceLoss compound lapsUsed trackTempC =
+  let baseRate = case compound of
+        Soft              -> 0.085 -- s/volta
+        Medium            -> 0.052
+        Hard              -> 0.031
+        Intermediate      -> 0.110
+        Wet               -> 0.140
+        UnknownCompound   -> 0.060
+      -- Fator de sensibilidade térmica: pista acima de 35C acelera a degradação
+      tempFactor = 1.0 + max 0.0 (trackTempC - 35.0) * 0.015
+      lapsF = fromIntegral (max 0 lapsUsed)
+      cliff = tyreCliffLap compound
+      -- Cliff exponencial se ultrapassar a vida útil nominal
+      cliffPenalty = if lapsUsed > cliff
+                       then 0.25 * ((fromIntegral (lapsUsed - cliff)) ** 1.5)
+                       else 0.0
+  in (baseRate * lapsF * tempFactor) + cliffPenalty
+
+-- | Ponto de perda drástica de aderência (Cliff Lap) por composto
+tyreCliffLap :: TyreCompound -> Int
+tyreCliffLap Soft            = 16
+tyreCliffLap Medium          = 26
+tyreCliffLap Hard            = 38
+tyreCliffLap Intermediate    = 22
+tyreCliffLap Wet             = 28
+tyreCliffLap UnknownCompound = 20
+
+-- | Verifica se o pneu ultrapassou a janela ideal de operação
+isTyreInCliff :: TyreCompound -> Int -> Bool
+isTyreInCliff compound lapsUsed = lapsUsed >= tyreCliffLap compound
+
 -- | Gera insight explicável rigoroso baseado exclusivamente em evidência empírica
 generateTelemetryInsight :: Text -> Evidence -> Insight
 generateTelemetryInsight driver e =
@@ -86,7 +120,6 @@ generateTelemetryInsight driver e =
 recommendNextPitStop :: DriverState -> Double -> Int -> StrategyRecommendation
 recommendNextPitStop state degRate totalSessionLaps =
   let currentLap = tyreAgeLaps state
-      -- Se a degradação acumulada ultrapassa 1.8s, recomenda troca
       targetL = if degRate * fromIntegral currentLap > 1.8
                   then currentLap + 1
                   else min totalSessionLaps (currentLap + 4)

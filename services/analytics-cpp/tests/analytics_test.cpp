@@ -67,11 +67,48 @@ void test_delta_and_json() {
     std::cout << "[PASS] test_delta_and_json: Delta computation and JSON serialization verified." << std::endl;
 }
 
+void test_microsectors_and_speed_traps_and_motec() {
+    std::vector<apex::analytics::AlignedGridPoint> ref_grid;
+    std::vector<apex::analytics::AlignedGridPoint> comp_grid;
+
+    for (double d = 0.0; d <= 5400.0; d += 5.0) {
+        double t_ref = d / (300.0 / 3.6);
+        double t_comp = d / (295.0 / 3.6);
+        ref_grid.push_back({d, t_ref, 300.0, 100.0, 0.0, 11000, 8, false, false});
+        comp_grid.push_back({d, t_comp, 295.0, 95.0, 0.0, 10800, 8, false, false});
+    }
+
+    auto channels = apex::analytics::SpatialAlignmentEngine::align_and_compute_delta(ref_grid, comp_grid);
+
+    // Test Microsectors
+    auto microsectors = apex::analytics::SpatialAlignmentEngine::compute_microsectors(channels, 100.0);
+    assert(!microsectors.empty());
+    assert(microsectors.size() == 54);
+    assert(microsectors[0].winner == "REF");
+    assert(microsectors[0].distance_end_m == 100.0);
+
+    // Test Speed Traps
+    auto traps = apex::analytics::SpatialAlignmentEngine::compute_speed_traps(channels);
+    assert(!traps.empty());
+    assert(traps.size() == 5);
+    assert(traps[0].name.find("Turn 1") != std::string::npos);
+
+    // Test MoTeC CSV Export
+    std::string csv = apex::analytics::SpatialAlignmentEngine::export_motec_csv(
+        "Bahrain GP 2024 Qualifying", 1, 16, channels
+    );
+    assert(csv.find("\"Format\",\"MoTeC CSV Telemetry Export\"") != std::string::npos);
+    assert(csv.find("Distance,Time_Ref,Time_Comp,Delta_Time") != std::string::npos);
+
+    std::cout << "[PASS] test_microsectors_and_speed_traps_and_motec: Microsectors, Speed Traps and MoTeC CSV verified." << std::endl;
+}
+
 int main() {
     std::cout << "=== APEX ANALYTICS C++ TESTS ===" << std::endl;
     test_integrate_distance();
     test_resample_to_grid();
     test_delta_and_json();
+    test_microsectors_and_speed_traps_and_motec();
     std::cout << "All Analytics C++ tests passed successfully!" << std::endl;
     return 0;
 }

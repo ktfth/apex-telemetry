@@ -110,6 +110,56 @@ std::string generate_live_comparison(int64_t session_key, int32_t ref_driver, in
     );
 }
 
+std::string generate_live_motec_csv(int32_t ref_driver, int32_t comp_driver, double step_m) {
+    const double total_dist = 5412.0;
+    std::vector<apex::analytics::RawSample> raw_ref;
+    std::vector<apex::analytics::RawSample> raw_comp;
+    double t_ref = 0.0, t_comp = 0.0, d = 0.0;
+
+    while (d <= total_dist) {
+        double v_ref = 315.0, v_comp = 313.0;
+        double thr_ref = 100.0, thr_comp = 100.0;
+        double brk_ref = 0.0, brk_comp = 0.0;
+        int gear = 8;
+        bool drs = (d >= 100 && d <= 580) || (d >= 1750 && d <= 1900) || (d >= 4650 && d <= 5050);
+
+        if (d >= 650 && d <= 850) {
+            v_ref = 68.0; v_comp = 66.0;
+            brk_ref = (d < 730) ? 95.0 : 0.0;
+            brk_comp = (d < 730) ? 92.0 : 0.0;
+            thr_ref = (d >= 730) ? 90.0 : 0.0;
+            thr_comp = (d >= 730) ? 85.0 : 0.0;
+            gear = 2;
+        } else if (d >= 1420 && d <= 1750) {
+            v_ref = 118.2; v_comp = 111.4;
+            brk_ref = (d < 1550) ? 90.0 : 0.0;
+            brk_comp = (d < 1550) ? 88.0 : 0.0;
+            thr_ref = (d >= 1550) ? 98.0 : 0.0;
+            thr_comp = (d >= 1581) ? 95.0 : ((d >= 1550) ? 50.0 : 0.0);
+            gear = 4;
+        }
+
+        raw_ref.push_back({ t_ref, v_ref, thr_ref, brk_ref, 11000, gear, drs });
+        raw_comp.push_back({ t_comp, v_comp, thr_comp, brk_comp, 10800, gear, drs });
+
+        double dt_ref = (step_m / (v_ref / 3.6));
+        double dt_comp = (step_m / (v_comp / 3.6));
+        t_ref += dt_ref;
+        t_comp += dt_comp;
+        d += step_m;
+    }
+
+    auto dist_ref = apex::analytics::SpatialAlignmentEngine::integrate_distance(raw_ref);
+    auto dist_comp = apex::analytics::SpatialAlignmentEngine::integrate_distance(raw_comp);
+    auto grid_ref = apex::analytics::SpatialAlignmentEngine::resample_to_grid(dist_ref, step_m, 25.0);
+    auto grid_comp = apex::analytics::SpatialAlignmentEngine::resample_to_grid(dist_comp, step_m, 25.0);
+    auto channels = apex::analytics::SpatialAlignmentEngine::align_and_compute_delta(grid_ref, grid_comp);
+
+    return apex::analytics::SpatialAlignmentEngine::export_motec_csv(
+        "Bahrain GP 2024 Qualifying Q3", ref_driver, comp_driver, channels
+    );
+}
+
 int main(int argc, char* argv[]) {
     int port = 8080;
     if (argc > 1) {
@@ -248,6 +298,41 @@ int main(int argc, char* argv[]) {
         }
         std::string payload = generate_live_comparison(*session, static_cast<int32_t>(*ref_driver), static_cast<int32_t>(*ref_lap), static_cast<int32_t>(*comp_driver), static_cast<int32_t>(*comp_lap), step_m);
         return apex::gateway::HttpResponse{200, "application/json", std::move(payload), {}};
+    });
+
+    // 6.1. Telemetry Export Engine (MoTeC CSV & JSON) (Fase 6)
+    server.route("GET", "/api/v1/analysis/export", [](const apex::gateway::HttpRequest& req) {
+        int32_t ref_driver = 1;
+        int32_t comp_driver = 16;
+        double step_m = 5.0;
+
+        if (const auto it = req.query_params.find("ref_driver"); it != req.query_params.end()) {
+            if (auto p = parse_positive_integer(it->second)) ref_driver = static_cast<int32_t>(*p);
+        }
+        if (const auto it = req.query_params.find("comp_driver"); it != req.query_params.end()) {
+            if (auto p = parse_positive_integer(it->second)) comp_driver = static_cast<int32_t>(*p);
+        }
+        if (const auto it = req.query_params.find("step_m"); it != req.query_params.end()) {
+            try { step_m = std::stod(it->second); } catch (...) {}
+        }
+
+        std::string format = "motec_csv";
+        if (const auto it = req.query_params.find("format"); it != req.query_params.end()) {
+            format = it->second;
+        }
+
+        if (format == "json") {
+            std::string payload = generate_live_comparison(9472, ref_driver, 14, comp_driver, 15, step_m);
+            return apex::gateway::HttpResponse{200, "application/json", std::move(payload), {
+                {"Content-Disposition", "attachment; filename=\"apex_telemetry_export.json\""}
+            }};
+        }
+
+        std::string csv = generate_live_motec_csv(ref_driver, comp_driver, step_m);
+        return apex::gateway::HttpResponse{200, "text/csv; charset=utf-8", std::move(csv), {
+            {"Content-Disposition", "attachment; filename=\"apex_telemetry_motec.csv\""},
+            {"X-Apex-Export-Format", "MoTeC-CSV-v1"}
+        }};
     });
 
     // 7. Server-Sent Events (SSE) Live Session Stream (Fase 5)
