@@ -30,7 +30,7 @@ export async function checkApiHealth(): Promise<ApiStatus> {
     return {
       online: true,
       service: data.service || 'apex-api-gateway',
-      version: data.version || '1.5.0-fase5',
+      version: data.version || '1.6.0-fase5',
       analyticsEngine: data.analytics_engine || 'spatial_alignment_cpp23',
       latencyMs
     };

@@ -1,5 +1,6 @@
 #include "http_server.hpp"
 #include "database_repository.hpp"
+#include "metrics_collector.hpp"
 #include "spatial_alignment.hpp"
 #include <iostream>
 #include <fstream>
@@ -7,6 +8,7 @@
 #include <csignal>
 #include <cmath>
 #include <charconv>
+#include <chrono>
 #include <optional>
 #include <memory>
 
@@ -120,21 +122,31 @@ int main(int argc, char* argv[]) {
 
     apex::gateway::HttpServer server(port);
     auto repository = std::make_shared<apex::gateway::DatabaseRepository>();
+    auto& metrics = apex::gateway::MetricsCollector::instance();
+    const auto start_time = std::chrono::steady_clock::now();
     g_server = &server;
 
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
 
-    // 1. Health check
-    server.route("GET", "/api/v1/health", [repository](const apex::gateway::HttpRequest&) {
+    // 0. Prometheus metrics endpoint
+    server.route("GET", "/metrics", [&metrics](const apex::gateway::HttpRequest&) {
+        return apex::gateway::HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", metrics.serialize(), {}};
+    });
+
+    // 1. Health check (enriched)
+    server.route("GET", "/api/v1/health", [repository, &metrics, start_time](const apex::gateway::HttpRequest&) {
         const bool database_healthy = repository->healthy();
-        return apex::gateway::HttpResponse{
-            200, "application/json",
-            std::string(R"({"status":"healthy","service":"apex-api-gateway","version":"1.5.0-fase5","analytics_engine":"spatial_alignment_cpp23","database":{"configured":)") +
-                (repository->configured() ? "true" : "false") + ",\"healthy\":" + (database_healthy ? "true" : "false") +
-                "},\"cpp_standard\":202302}",
-            {}
-        };
+        const auto uptime = std::chrono::steady_clock::now() - start_time;
+        const auto uptime_s = std::chrono::duration_cast<std::chrono::seconds>(uptime).count();
+        std::ostringstream json;
+        json << R"({"status":"healthy","service":"apex-api-gateway","version":"1.6.0-fase5")"
+             << R"(,"analytics_engine":"spatial_alignment_cpp23")"
+             << R"(,"database":{"configured":)" << (repository->configured() ? "true" : "false")
+             << R"(,"healthy":)" << (database_healthy ? "true" : "false") << "}"
+             << R"(,"uptime_seconds":)" << uptime_s
+             << R"(,"cpp_standard":202302})";
+        return apex::gateway::HttpResponse{200, "application/json", json.str(), {}};
     });
 
     // 2. Sessions listing

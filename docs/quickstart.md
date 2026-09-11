@@ -67,8 +67,11 @@ Endpoints disponíveis:
 - `GET http://localhost:8080/api/v1/sessions/9472/laps`
 - `GET http://localhost:8080/api/v1/sessions/9472/race-control`
 - `GET http://localhost:8080/api/v1/analysis/compare?session_key=9472&ref_driver=1&ref_lap=14&comp_driver=16&comp_lap=15&step_m=5`
+- `GET http://localhost:8080/metrics` (Prometheus text exposition format)
 
 O endpoint de comparação valida todos os identificadores e aceita grades espaciais entre 1 e 50 metros. Respostas inválidas usam um envelope JSON estável com `error` e `code`.
+
+O endpoint `/metrics` expõe contadores de requests por rota e status, histograma de latência (p50/p95/p99), queries ao banco e uso de fallbacks. Prometheus scrapa automaticamente via Docker Compose e o Grafana inicia com um dashboard pré-provisionado ("ApexTelemetry — API Gateway").
 
 ---
 
