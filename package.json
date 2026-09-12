@@ -15,7 +15,8 @@
     "hs:test": "cabal test all --project-dir services/strategy-hs",
     "contracts:schema": "node scripts/generate-schema.mjs",
     "verify:stack": "node scripts/verify-stack.mjs",
-    "test:all": "pnpm cpp:test && pnpm hs:test && pnpm test && pnpm typecheck"
+    "test:all": "pnpm cpp:test && pnpm hs:test && pnpm test && pnpm typecheck",
+    "test:live": "APEX_LIVE_GATEWAY=1 NEXT_PUBLIC_API_URL=http://127.0.0.1:8080/api/v1 pnpm --filter @apex-telemetry/web exec vitest run src/test/live.integration.test.ts"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

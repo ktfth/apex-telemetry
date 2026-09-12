@@ -52,12 +52,39 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 /** A comparação atravessa o pipeline completo de alinhamento espacial; leva mais tempo. */
 const ANALYSIS_TIMEOUT_MS = 60_000;
 
-function mergeSignals(external: AbortSignal | undefined, timeoutMs: number): AbortSignal {
-  const timeout = AbortSignal.timeout(timeoutMs);
-  if (!external) return timeout;
-  // AbortSignal.any está disponível em todos os navegadores-alvo e no Node 20+.
-  if (typeof AbortSignal.any === 'function') return AbortSignal.any([external, timeout]);
-  return external;
+/**
+ * Combina o cancelamento do chamador com um prazo máximo.
+ *
+ * Construído sobre `AbortController` em vez de `AbortSignal.timeout`/`any`: aqueles
+ * são estáticos recentes, e a detecção de suporte anterior devolvia apenas o sinal
+ * externo quando `any` faltava — ou seja, a requisição ficava **sem prazo algum**
+ * exatamente no ambiente mais antigo, que é onde o prazo mais importa. O
+ * `release` cancela o temporizador quando a resposta chega, em vez de deixar um
+ * timer pendente por requisição até ele disparar sozinho.
+ */
+function withDeadline(
+  external: AbortSignal | undefined,
+  timeoutMs: number
+): { signal: AbortSignal; release: () => void } {
+  const controller = new AbortController();
+
+  const timer = setTimeout(() => {
+    controller.abort(new DOMException(`Tempo esgotado após ${timeoutMs} ms`, 'TimeoutError'));
+  }, timeoutMs);
+
+  const propagate = () => controller.abort(external?.reason);
+  if (external) {
+    if (external.aborted) propagate();
+    else external.addEventListener('abort', propagate, { once: true });
+  }
+
+  return {
+    signal: controller.signal,
+    release: () => {
+      clearTimeout(timer);
+      external?.removeEventListener('abort', propagate);
+    }
+  };
 }
 
 async function request<T>(
@@ -65,13 +92,14 @@ async function request<T>(
   options: { signal?: AbortSignal; timeoutMs?: number } = {}
 ): Promise<ApiResult<T>> {
   const started = performance.now();
+  const deadline = withDeadline(options.signal, options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   let response: Response;
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       method: 'GET',
       headers: { Accept: 'application/json' },
-      signal: mergeSignals(options.signal, options.timeoutMs ?? DEFAULT_TIMEOUT_MS)
+      signal: deadline.signal
     });
   } catch (error) {
     // Um abort pedido pelo chamador precisa subir intacto para não virar erro de UI.
@@ -82,6 +110,8 @@ async function request<T>(
       'GATEWAY_UNREACHABLE',
       0
     );
+  } finally {
+    deadline.release();
   }
 
   if (!response.ok) {
