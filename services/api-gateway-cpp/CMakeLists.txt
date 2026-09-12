@@ -15,13 +15,13 @@ add_executable(apex_api_gateway
     src/database_repository.cpp
     src/telemetry_resolver.cpp
     src/strategy_client.cpp
-    ../analytics-cpp/src/spatial_alignment.cpp
     ../common/http/http_client.cpp
     ../common/openf1/openf1_client.cpp
     ../common/simdjson/simdjson.cpp
 )
 
 target_link_libraries(apex_api_gateway PRIVATE
+    apex_analytics
     PostgreSQL::PostgreSQL
     CURL::libcurl
     Threads::Threads
@@ -29,7 +29,6 @@ target_link_libraries(apex_api_gateway PRIVATE
 
 target_include_directories(apex_api_gateway PRIVATE
     include
-    ../analytics-cpp/include
     ../common
     ../common/simdjson
 )

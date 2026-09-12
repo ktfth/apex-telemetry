@@ -1,0 +1,5512 @@
+{
+ "schema_version": "1.2.0",
+ "session_key": 9468,
+ "circuit_key": 63,
+ "circuit_name": "Sakhir",
+ "country_name": "Bahrain",
+ "session_name": "Qualifying",
+ "data_source": "openf1-upstream",
+ "grid_step_m": 25.0,
+ "total_distance_m": 5350.0,
+ "track_temperature_c": 21.5,
+ "air_temperature_c": 18.0,
+ "reference_lap": {
+  "driver_number": 1,
+  "driver_code": "VER",
+  "team_name": "Red Bull Racing",
+  "team_colour": "#3671c6",
+  "lap_number": 16,
+  "lap_time_s": 89.179,
+  "compound": "SOFT",
+  "stint_number": 6,
+  "stint_lap": 2,
+  "tyre_age_laps": 1,
+  "coverage_pct": 99.11,
+  "samples_count": 346,
+  "sector_1_s": 28.535,
+  "sector_2_s": 38.269,
+  "sector_3_s": 22.375
+ },
+ "comparison_lap": {
+  "driver_number": 16,
+  "driver_code": "LEC",
+  "team_name": "Ferrari",
+  "team_colour": "#e8002d",
+  "lap_number": 15,
+  "lap_time_s": 89.48,
+  "compound": "SOFT",
+  "stint_number": 6,
+  "stint_lap": 2,
+  "tyre_age_laps": 2,
+  "coverage_pct": 100.0,
+  "samples_count": 349,
+  "sector_1_s": 28.863,
+  "sector_2_s": 38.344,
+  "sector_3_s": 22.273
+ },
+ "corners": [
+  {
+   "index": 1,
+   "label": "C1",
+   "entry_distance_m": 575.0,
+   "apex_distance_m": 725.0,
+   "exit_distance_m": 1050.0,
+   "apex_speed_kmh": 75.5
+  },
+  {
+   "index": 2,
+   "label": "C2",
+   "entry_distance_m": 1350.0,
+   "apex_distance_m": 1500.0,
+   "exit_distance_m": 1725.0,
+   "apex_speed_kmh": 121.0
+  },
+  {
+   "index": 3,
+   "label": "C3",
+   "entry_distance_m": 2100.0,
+   "apex_distance_m": 2225.0,
+   "exit_distance_m": 2475.0,
+   "apex_speed_kmh": 81.0
+  },
+  {
+   "index": 4,
+   "label": "C4",
+   "entry_distance_m": 2550.0,
+   "apex_distance_m": 2700.0,
+   "exit_distance_m": 3000.0,
+   "apex_speed_kmh": 81.9
+  },
+  {
+   "index": 5,
+   "label": "C5",
+   "entry_distance_m": 3275.0,
+   "apex_distance_m": 3425.0,
+   "exit_distance_m": 3675.0,
+   "apex_speed_kmh": 162.6
+  },
+  {
+   "index": 6,
+   "label": "C6",
+   "entry_distance_m": 3950.0,
+   "apex_distance_m": 4075.0,
+   "exit_distance_m": 4375.0,
+   "apex_speed_kmh": 142.2
+  },
+  {
+   "index": 7,
+   "label": "C7",
+   "entry_distance_m": 4750.0,
+   "apex_distance_m": 4875.0,
+   "exit_distance_m": 5175.0,
+   "apex_speed_kmh": 133.3
+  }
+ ],
+ "speed_traps": [
+  {
+   "name": "Speed Trap",
+   "distance_m": 500.0,
+   "ref_speed_kmh": 320.0,
+   "comp_speed_kmh": 317.0,
+   "delta_kmh": -3.0,
+   "origin": "openf1_marshalling_loop"
+  },
+  {
+   "name": "Pico de reta 1",
+   "distance_m": 1350.0,
+   "ref_speed_kmh": 305.5,
+   "comp_speed_kmh": 303.6,
+   "delta_kmh": -1.9,
+   "origin": "channel_peak"
+  },
+  {
+   "name": "Intermediate 1",
+   "distance_m": 1767.4,
+   "ref_speed_kmh": 242.0,
+   "comp_speed_kmh": 243.0,
+   "delta_kmh": 1.0,
+   "origin": "openf1_marshalling_loop"
+  },
+  {
+   "name": "Pico de reta 2",
+   "distance_m": 2100.0,
+   "ref_speed_kmh": 259.2,
+   "comp_speed_kmh": 259.4,
+   "delta_kmh": 0.2,
+   "origin": "channel_peak"
+  },
+  {
+   "name": "Pico de reta 3",
+   "distance_m": 2550.0,
+   "ref_speed_kmh": 258.9,
+   "comp_speed_kmh": 259.4,
+   "delta_kmh": 0.5,
+   "origin": "channel_peak"
+  },
+  {
+   "name": "Pico de reta 4",
+   "distance_m": 3250.0,
+   "ref_speed_kmh": 308.7,
+   "comp_speed_kmh": 307.0,
+   "delta_kmh": -1.7,
+   "origin": "channel_peak"
+  },
+  {
+   "name": "Intermediate 2",
+   "distance_m": 3955.3,
+   "ref_speed_kmh": 271.0,
+   "comp_speed_kmh": 273.0,
+   "delta_kmh": 2.0,
+   "origin": "openf1_marshalling_loop"
+  },
+  {
+   "name": "Pico de reta 5",
+   "distance_m": 4700.0,
+   "ref_speed_kmh": 296.0,
+   "comp_speed_kmh": 294.0,
+   "delta_kmh": -2.0,
+   "origin": "channel_peak"
+  }
+ ],
+ "microsectors": [
+  {
+   "index": 0,
+   "distance_start_m": 0.0,
+   "distance_end_m": 100.0,
+   "delta_s": 0.0307,
+   "ref_avg_speed_kmh": 305.5,
+   "comp_avg_speed_kmh": 298.0,
+   "winner": "REF"
+  },
+  {
+   "index": 1,
+   "distance_start_m": 100.0,
+   "distance_end_m": 200.0,
+   "delta_s": 0.0352,
+   "ref_avg_speed_kmh": 314.5,
+   "comp_avg_speed_kmh": 306.0,
+   "winner": "REF"
+  },
+  {
+   "index": 2,
+   "distance_start_m": 200.0,
+   "distance_end_m": 300.0,
+   "delta_s": 0.0246,
+   "ref_avg_speed_kmh": 318.9,
+   "comp_avg_speed_kmh": 312.7,
+   "winner": "REF"
+  },
+  {
+   "index": 3,
+   "distance_start_m": 300.0,
+   "distance_end_m": 400.0,
+   "delta_s": 0.0197,
+   "ref_avg_speed_kmh": 320.7,
+   "comp_avg_speed_kmh": 315.9,
+   "winner": "REF"
+  },
+  {
+   "index": 4,
+   "distance_start_m": 400.0,
+   "distance_end_m": 500.0,
+   "delta_s": 0.0167,
+   "ref_avg_speed_kmh": 321.5,
+   "comp_avg_speed_kmh": 317.5,
+   "winner": "REF"
+  },
+  {
+   "index": 5,
+   "distance_start_m": 500.0,
+   "distance_end_m": 600.0,
+   "delta_s": -0.0057,
+   "ref_avg_speed_kmh": 313.4,
+   "comp_avg_speed_kmh": 316.2,
+   "winner": "COMP"
+  },
+  {
+   "index": 6,
+   "distance_start_m": 600.0,
+   "distance_end_m": 700.0,
+   "delta_s": -0.1938,
+   "ref_avg_speed_kmh": 176.7,
+   "comp_avg_speed_kmh": 197.9,
+   "winner": "COMP"
+  },
+  {
+   "index": 7,
+   "distance_start_m": 700.0,
+   "distance_end_m": 800.0,
+   "delta_s": 0.2852,
+   "ref_avg_speed_kmh": 113.0,
+   "comp_avg_speed_kmh": 105.7,
+   "winner": "REF"
+  },
+  {
+   "index": 8,
+   "distance_start_m": 800.0,
+   "distance_end_m": 900.0,
+   "delta_s": 0.0983,
+   "ref_avg_speed_kmh": 194.3,
+   "comp_avg_speed_kmh": 185.8,
+   "winner": "REF"
+  },
+  {
+   "index": 9,
+   "distance_start_m": 900.0,
+   "distance_end_m": 1000.0,
+   "delta_s": 0.0297,
+   "ref_avg_speed_kmh": 236.6,
+   "comp_avg_speed_kmh": 232.4,
+   "winner": "REF"
+  },
+  {
+   "index": 10,
+   "distance_start_m": 1000.0,
+   "distance_end_m": 1100.0,
+   "delta_s": 0.0117,
+   "ref_avg_speed_kmh": 263.7,
+   "comp_avg_speed_kmh": 261.9,
+   "winner": "REF"
+  },
+  {
+   "index": 11,
+   "distance_start_m": 1100.0,
+   "distance_end_m": 1200.0,
+   "delta_s": 0.013,
+   "ref_avg_speed_kmh": 283.2,
+   "comp_avg_speed_kmh": 280.8,
+   "winner": "REF"
+  },
+  {
+   "index": 12,
+   "distance_start_m": 1200.0,
+   "distance_end_m": 1300.0,
+   "delta_s": 0.0107,
+   "ref_avg_speed_kmh": 296.5,
+   "comp_avg_speed_kmh": 294.3,
+   "winner": "REF"
+  },
+  {
+   "index": 13,
+   "distance_start_m": 1300.0,
+   "distance_end_m": 1400.0,
+   "delta_s": -0.0207,
+   "ref_avg_speed_kmh": 291.5,
+   "comp_avg_speed_kmh": 298.0,
+   "winner": "COMP"
+  },
+  {
+   "index": 14,
+   "distance_start_m": 1400.0,
+   "distance_end_m": 1500.0,
+   "delta_s": -0.1483,
+   "ref_avg_speed_kmh": 175.2,
+   "comp_avg_speed_kmh": 189.5,
+   "winner": "COMP"
+  },
+  {
+   "index": 15,
+   "distance_start_m": 1500.0,
+   "distance_end_m": 1600.0,
+   "delta_s": 0.0176,
+   "ref_avg_speed_kmh": 149.5,
+   "comp_avg_speed_kmh": 149.8,
+   "winner": "REF"
+  },
+  {
+   "index": 16,
+   "distance_start_m": 1600.0,
+   "distance_end_m": 1700.0,
+   "delta_s": 0.0303,
+   "ref_avg_speed_kmh": 213.2,
+   "comp_avg_speed_kmh": 210.7,
+   "winner": "REF"
+  },
+  {
+   "index": 17,
+   "distance_start_m": 1700.0,
+   "distance_end_m": 1800.0,
+   "delta_s": 0.0049,
+   "ref_avg_speed_kmh": 245.6,
+   "comp_avg_speed_kmh": 245.3,
+   "winner": "REF"
+  },
+  {
+   "index": 18,
+   "distance_start_m": 1800.0,
+   "distance_end_m": 1900.0,
+   "delta_s": -0.0088,
+   "ref_avg_speed_kmh": 229.0,
+   "comp_avg_speed_kmh": 230.2,
+   "winner": "COMP"
+  },
+  {
+   "index": 19,
+   "distance_start_m": 1900.0,
+   "distance_end_m": 2000.0,
+   "delta_s": 0.0501,
+   "ref_avg_speed_kmh": 237.2,
+   "comp_avg_speed_kmh": 230.3,
+   "winner": "REF"
+  },
+  {
+   "index": 20,
+   "distance_start_m": 2000.0,
+   "distance_end_m": 2100.0,
+   "delta_s": 0.0186,
+   "ref_avg_speed_kmh": 253.2,
+   "comp_avg_speed_kmh": 250.9,
+   "winner": "REF"
+  },
+  {
+   "index": 21,
+   "distance_start_m": 2100.0,
+   "distance_end_m": 2200.0,
+   "delta_s": -0.1617,
+   "ref_avg_speed_kmh": 172.2,
+   "comp_avg_speed_kmh": 180.8,
+   "winner": "COMP"
+  },
+  {
+   "index": 22,
+   "distance_start_m": 2200.0,
+   "distance_end_m": 2300.0,
+   "delta_s": 0.1565,
+   "ref_avg_speed_kmh": 115.0,
+   "comp_avg_speed_kmh": 109.4,
+   "winner": "REF"
+  },
+  {
+   "index": 23,
+   "distance_start_m": 2300.0,
+   "distance_end_m": 2400.0,
+   "delta_s": 0.069,
+   "ref_avg_speed_kmh": 197.3,
+   "comp_avg_speed_kmh": 191.9,
+   "winner": "REF"
+  },
+  {
+   "index": 24,
+   "distance_start_m": 2400.0,
+   "distance_end_m": 2500.0,
+   "delta_s": 0.003,
+   "ref_avg_speed_kmh": 237.3,
+   "comp_avg_speed_kmh": 237.1,
+   "winner": "REF"
+  },
+  {
+   "index": 25,
+   "distance_start_m": 2500.0,
+   "distance_end_m": 2600.0,
+   "delta_s": -0.0506,
+   "ref_avg_speed_kmh": 241.6,
+   "comp_avg_speed_kmh": 250.5,
+   "winner": "COMP"
+  },
+  {
+   "index": 26,
+   "distance_start_m": 2600.0,
+   "distance_end_m": 2700.0,
+   "delta_s": -0.2245,
+   "ref_avg_speed_kmh": 129.2,
+   "comp_avg_speed_kmh": 141.7,
+   "winner": "COMP"
+  },
+  {
+   "index": 27,
+   "distance_start_m": 2700.0,
+   "distance_end_m": 2800.0,
+   "delta_s": 0.1889,
+   "ref_avg_speed_kmh": 144.3,
+   "comp_avg_speed_kmh": 138.5,
+   "winner": "REF"
+  },
+  {
+   "index": 28,
+   "distance_start_m": 2800.0,
+   "distance_end_m": 2900.0,
+   "delta_s": 0.0297,
+   "ref_avg_speed_kmh": 225.5,
+   "comp_avg_speed_kmh": 221.5,
+   "winner": "REF"
+  },
+  {
+   "index": 29,
+   "distance_start_m": 2900.0,
+   "distance_end_m": 3000.0,
+   "delta_s": 0.018,
+   "ref_avg_speed_kmh": 262.8,
+   "comp_avg_speed_kmh": 259.9,
+   "winner": "REF"
+  },
+  {
+   "index": 30,
+   "distance_start_m": 3000.0,
+   "distance_end_m": 3100.0,
+   "delta_s": 0.0146,
+   "ref_avg_speed_kmh": 284.4,
+   "comp_avg_speed_kmh": 281.7,
+   "winner": "REF"
+  },
+  {
+   "index": 31,
+   "distance_start_m": 3100.0,
+   "distance_end_m": 3200.0,
+   "delta_s": 0.0151,
+   "ref_avg_speed_kmh": 299.1,
+   "comp_avg_speed_kmh": 295.9,
+   "winner": "REF"
+  },
+  {
+   "index": 32,
+   "distance_start_m": 3200.0,
+   "distance_end_m": 3300.0,
+   "delta_s": 0.0036,
+   "ref_avg_speed_kmh": 304.0,
+   "comp_avg_speed_kmh": 304.4,
+   "winner": "REF"
+  },
+  {
+   "index": 33,
+   "distance_start_m": 3300.0,
+   "distance_end_m": 3400.0,
+   "delta_s": -0.0794,
+   "ref_avg_speed_kmh": 225.6,
+   "comp_avg_speed_kmh": 236.4,
+   "winner": "COMP"
+  },
+  {
+   "index": 34,
+   "distance_start_m": 3400.0,
+   "distance_end_m": 3500.0,
+   "delta_s": 0.0248,
+   "ref_avg_speed_kmh": 179.6,
+   "comp_avg_speed_kmh": 178.6,
+   "winner": "REF"
+  },
+  {
+   "index": 35,
+   "distance_start_m": 3500.0,
+   "distance_end_m": 3600.0,
+   "delta_s": 0.043,
+   "ref_avg_speed_kmh": 220.1,
+   "comp_avg_speed_kmh": 215.3,
+   "winner": "REF"
+  },
+  {
+   "index": 36,
+   "distance_start_m": 3600.0,
+   "distance_end_m": 3700.0,
+   "delta_s": 0.0119,
+   "ref_avg_speed_kmh": 246.7,
+   "comp_avg_speed_kmh": 245.3,
+   "winner": "REF"
+  },
+  {
+   "index": 37,
+   "distance_start_m": 3700.0,
+   "distance_end_m": 3800.0,
+   "delta_s": 0.006,
+   "ref_avg_speed_kmh": 259.2,
+   "comp_avg_speed_kmh": 258.4,
+   "winner": "REF"
+  },
+  {
+   "index": 38,
+   "distance_start_m": 3800.0,
+   "distance_end_m": 3900.0,
+   "delta_s": -0.0006,
+   "ref_avg_speed_kmh": 266.2,
+   "comp_avg_speed_kmh": 266.9,
+   "winner": "EQUAL"
+  },
+  {
+   "index": 39,
+   "distance_start_m": 3900.0,
+   "distance_end_m": 4000.0,
+   "delta_s": -0.0141,
+   "ref_avg_speed_kmh": 250.1,
+   "comp_avg_speed_kmh": 253.3,
+   "winner": "COMP"
+  },
+  {
+   "index": 40,
+   "distance_start_m": 4000.0,
+   "distance_end_m": 4100.0,
+   "delta_s": -0.0487,
+   "ref_avg_speed_kmh": 159.3,
+   "comp_avg_speed_kmh": 163.6,
+   "winner": "COMP"
+  },
+  {
+   "index": 41,
+   "distance_start_m": 4100.0,
+   "distance_end_m": 4200.0,
+   "delta_s": 0.0458,
+   "ref_avg_speed_kmh": 189.3,
+   "comp_avg_speed_kmh": 185.5,
+   "winner": "REF"
+  },
+  {
+   "index": 42,
+   "distance_start_m": 4200.0,
+   "distance_end_m": 4300.0,
+   "delta_s": 0.0159,
+   "ref_avg_speed_kmh": 238.1,
+   "comp_avg_speed_kmh": 236.1,
+   "winner": "REF"
+  },
+  {
+   "index": 43,
+   "distance_start_m": 4300.0,
+   "distance_end_m": 4400.0,
+   "delta_s": 0.0121,
+   "ref_avg_speed_kmh": 262.8,
+   "comp_avg_speed_kmh": 261.2,
+   "winner": "REF"
+  },
+  {
+   "index": 44,
+   "distance_start_m": 4400.0,
+   "distance_end_m": 4500.0,
+   "delta_s": 0.0101,
+   "ref_avg_speed_kmh": 278.4,
+   "comp_avg_speed_kmh": 277.0,
+   "winner": "REF"
+  },
+  {
+   "index": 45,
+   "distance_start_m": 4500.0,
+   "distance_end_m": 4600.0,
+   "delta_s": 0.0015,
+   "ref_avg_speed_kmh": 287.8,
+   "comp_avg_speed_kmh": 288.0,
+   "winner": "REF"
+  },
+  {
+   "index": 46,
+   "distance_start_m": 4600.0,
+   "distance_end_m": 4700.0,
+   "delta_s": 0.0053,
+   "ref_avg_speed_kmh": 293.7,
+   "comp_avg_speed_kmh": 293.0,
+   "winner": "REF"
+  },
+  {
+   "index": 47,
+   "distance_start_m": 4700.0,
+   "distance_end_m": 4800.0,
+   "delta_s": -0.0466,
+   "ref_avg_speed_kmh": 270.5,
+   "comp_avg_speed_kmh": 276.9,
+   "winner": "COMP"
+  },
+  {
+   "index": 48,
+   "distance_start_m": 4800.0,
+   "distance_end_m": 4900.0,
+   "delta_s": -0.0701,
+   "ref_avg_speed_kmh": 156.6,
+   "comp_avg_speed_kmh": 165.3,
+   "winner": "COMP"
+  },
+  {
+   "index": 49,
+   "distance_start_m": 4900.0,
+   "distance_end_m": 5000.0,
+   "delta_s": 0.016,
+   "ref_avg_speed_kmh": 183.8,
+   "comp_avg_speed_kmh": 182.7,
+   "winner": "REF"
+  },
+  {
+   "index": 50,
+   "distance_start_m": 5000.0,
+   "distance_end_m": 5100.0,
+   "delta_s": -0.0081,
+   "ref_avg_speed_kmh": 233.0,
+   "comp_avg_speed_kmh": 235.1,
+   "winner": "COMP"
+  },
+  {
+   "index": 51,
+   "distance_start_m": 5100.0,
+   "distance_end_m": 5200.0,
+   "delta_s": -0.006,
+   "ref_avg_speed_kmh": 258.7,
+   "comp_avg_speed_kmh": 260.5,
+   "winner": "COMP"
+  },
+  {
+   "index": 52,
+   "distance_start_m": 5200.0,
+   "distance_end_m": 5300.0,
+   "delta_s": -0.0024,
+   "ref_avg_speed_kmh": 275.6,
+   "comp_avg_speed_kmh": 276.4,
+   "winner": "COMP"
+  },
+  {
+   "index": 53,
+   "distance_start_m": 5300.0,
+   "distance_end_m": 5350.0,
+   "delta_s": 0.0034,
+   "ref_avg_speed_kmh": 287.7,
+   "comp_avg_speed_kmh": 287.2,
+   "winner": "REF"
+  }
+ ],
+ "channels": [
+  {
+   "distance_m": 0.0,
+   "delta_time_s": 0.0,
+   "ref": {
+    "time_s": 0.0,
+    "speed_kmh": 301.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10757,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 0.0,
+    "speed_kmh": 293.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11780,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 25.0,
+   "delta_time_s": 0.0073,
+   "ref": {
+    "time_s": 0.2987,
+    "speed_kmh": 301.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10825,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 0.306,
+    "speed_kmh": 296.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10321,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 50.0,
+   "delta_time_s": 0.014,
+   "ref": {
+    "time_s": 0.5952,
+    "speed_kmh": 305.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10952,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 0.6092,
+    "speed_kmh": 298.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10606,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 75.0,
+   "delta_time_s": 0.0223,
+   "ref": {
+    "time_s": 0.8879,
+    "speed_kmh": 308.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11024,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 0.9102,
+    "speed_kmh": 300.4,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10690,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 100.0,
+   "delta_time_s": 0.0307,
+   "ref": {
+    "time_s": 1.1787,
+    "speed_kmh": 310.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11066,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 1.2094,
+    "speed_kmh": 302.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10760,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 125.0,
+   "delta_time_s": 0.0405,
+   "ref": {
+    "time_s": 1.4669,
+    "speed_kmh": 313.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11113,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 1.5075,
+    "speed_kmh": 303.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10829,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 150.0,
+   "delta_time_s": 0.0495,
+   "ref": {
+    "time_s": 1.7537,
+    "speed_kmh": 315.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11143,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 1.8031,
+    "speed_kmh": 306.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10892,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 175.0,
+   "delta_time_s": 0.0579,
+   "ref": {
+    "time_s": 2.0389,
+    "speed_kmh": 316.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11225,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 2.0969,
+    "speed_kmh": 307.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10950,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 200.0,
+   "delta_time_s": 0.0659,
+   "ref": {
+    "time_s": 2.3229,
+    "speed_kmh": 317.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11231,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 2.3888,
+    "speed_kmh": 310.4,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11018,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 225.0,
+   "delta_time_s": 0.0727,
+   "ref": {
+    "time_s": 2.6059,
+    "speed_kmh": 318.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11233,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 2.6786,
+    "speed_kmh": 311.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11060,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 250.0,
+   "delta_time_s": 0.0793,
+   "ref": {
+    "time_s": 2.8882,
+    "speed_kmh": 319.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11265,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 2.9676,
+    "speed_kmh": 312.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11096,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 275.0,
+   "delta_time_s": 0.0852,
+   "ref": {
+    "time_s": 3.1704,
+    "speed_kmh": 319.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11306,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 3.2555,
+    "speed_kmh": 314.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11132,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 300.0,
+   "delta_time_s": 0.0905,
+   "ref": {
+    "time_s": 3.4519,
+    "speed_kmh": 320.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11326,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 3.5424,
+    "speed_kmh": 314.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11161,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 325.0,
+   "delta_time_s": 0.0963,
+   "ref": {
+    "time_s": 3.7328,
+    "speed_kmh": 320.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11350,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 3.8291,
+    "speed_kmh": 314.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11186,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 350.0,
+   "delta_time_s": 0.1018,
+   "ref": {
+    "time_s": 4.0136,
+    "speed_kmh": 320.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11336,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 4.1154,
+    "speed_kmh": 316.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11213,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 375.0,
+   "delta_time_s": 0.1064,
+   "ref": {
+    "time_s": 4.294,
+    "speed_kmh": 321.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11370,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 4.4005,
+    "speed_kmh": 317.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11233,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 400.0,
+   "delta_time_s": 0.1102,
+   "ref": {
+    "time_s": 4.5744,
+    "speed_kmh": 321.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11396,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 4.6846,
+    "speed_kmh": 317.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11262,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 425.0,
+   "delta_time_s": 0.1145,
+   "ref": {
+    "time_s": 4.8546,
+    "speed_kmh": 321.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11382,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 4.969,
+    "speed_kmh": 317.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11261,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 450.0,
+   "delta_time_s": 0.1189,
+   "ref": {
+    "time_s": 5.1345,
+    "speed_kmh": 321.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11385,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 5.2534,
+    "speed_kmh": 317.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11306,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 475.0,
+   "delta_time_s": 0.123,
+   "ref": {
+    "time_s": 5.4144,
+    "speed_kmh": 321.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11353,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 5.5374,
+    "speed_kmh": 317.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11394,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 500.0,
+   "delta_time_s": 0.1269,
+   "ref": {
+    "time_s": 5.694,
+    "speed_kmh": 322.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11302,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 5.821,
+    "speed_kmh": 318.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11340,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 525.0,
+   "delta_time_s": 0.1305,
+   "ref": {
+    "time_s": 5.9735,
+    "speed_kmh": 322.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11325,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 6.104,
+    "speed_kmh": 319.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11293,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 550.0,
+   "delta_time_s": 0.1337,
+   "ref": {
+    "time_s": 6.2532,
+    "speed_kmh": 321.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11339,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 6.3869,
+    "speed_kmh": 318.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11263,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 575.0,
+   "delta_time_s": 0.1356,
+   "ref": {
+    "time_s": 6.5349,
+    "speed_kmh": 316.8,
+    "throttle_pct": 39.6,
+    "brake_pct": 60.4,
+    "rpm": 11343,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 6.6705,
+    "speed_kmh": 317.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 21.5,
+    "rpm": 11216,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 600.0,
+   "delta_time_s": 0.1212,
+   "ref": {
+    "time_s": 6.8373,
+    "speed_kmh": 284.7,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10415,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 6.9585,
+    "speed_kmh": 307.7,
+    "throttle_pct": 84.3,
+    "brake_pct": 100.0,
+    "rpm": 11007,
+    "gear": 8,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 625.0,
+   "delta_time_s": 0.0972,
+   "ref": {
+    "time_s": 7.1797,
+    "speed_kmh": 226.3,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9460,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 7.2769,
+    "speed_kmh": 263.0,
+    "throttle_pct": 3.3,
+    "brake_pct": 100.0,
+    "rpm": 9645,
+    "gear": 8,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 650.0,
+   "delta_time_s": 0.0328,
+   "ref": {
+    "time_s": 7.6372,
+    "speed_kmh": 171.4,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10202,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 7.67,
+    "speed_kmh": 202.3,
+    "throttle_pct": 2.7,
+    "brake_pct": 100.0,
+    "rpm": 8995,
+    "gear": 8,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 675.0,
+   "delta_time_s": -0.0235,
+   "ref": {
+    "time_s": 8.2465,
+    "speed_kmh": 120.5,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 8154,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 8.2229,
+    "speed_kmh": 132.4,
+    "throttle_pct": 0.8,
+    "brake_pct": 100.0,
+    "rpm": 9111,
+    "gear": 8,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 700.0,
+   "delta_time_s": -0.0726,
+   "ref": {
+    "time_s": 9.1442,
+    "speed_kmh": 80.7,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 5484,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 9.0717,
+    "speed_kmh": 84.2,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 6817,
+    "gear": 2,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 725.0,
+   "delta_time_s": -0.0035,
+   "ref": {
+    "time_s": 10.359,
+    "speed_kmh": 75.5,
+    "throttle_pct": 28.2,
+    "brake_pct": 0.0,
+    "rpm": 5730,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 10.3555,
+    "speed_kmh": 67.7,
+    "throttle_pct": 33.3,
+    "brake_pct": 0.0,
+    "rpm": 6126,
+    "gear": 2,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 750.0,
+   "delta_time_s": 0.0942,
+   "ref": {
+    "time_s": 11.4057,
+    "speed_kmh": 103.8,
+    "throttle_pct": 76.0,
+    "brake_pct": 0.0,
+    "rpm": 7975,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 11.4998,
+    "speed_kmh": 92.4,
+    "throttle_pct": 62.8,
+    "brake_pct": 0.0,
+    "rpm": 8709,
+    "gear": 2,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 775.0,
+   "delta_time_s": 0.1743,
+   "ref": {
+    "time_s": 12.1392,
+    "speed_kmh": 140.6,
+    "throttle_pct": 89.2,
+    "brake_pct": 0.0,
+    "rpm": 10873,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 12.3135,
+    "speed_kmh": 130.4,
+    "throttle_pct": 77.1,
+    "brake_pct": 0.0,
+    "rpm": 10631,
+    "gear": 2,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 800.0,
+   "delta_time_s": 0.2126,
+   "ref": {
+    "time_s": 12.7319,
+    "speed_kmh": 164.2,
+    "throttle_pct": 89.3,
+    "brake_pct": 0.0,
+    "rpm": 10309,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 12.9445,
+    "speed_kmh": 153.7,
+    "throttle_pct": 79.6,
+    "brake_pct": 0.0,
+    "rpm": 9961,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 825.0,
+   "delta_time_s": 0.2445,
+   "ref": {
+    "time_s": 13.2524,
+    "speed_kmh": 180.1,
+    "throttle_pct": 93.1,
+    "brake_pct": 0.0,
+    "rpm": 11450,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 13.497,
+    "speed_kmh": 171.4,
+    "throttle_pct": 87.4,
+    "brake_pct": 0.0,
+    "rpm": 11105,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 850.0,
+   "delta_time_s": 0.2718,
+   "ref": {
+    "time_s": 13.7296,
+    "speed_kmh": 198.3,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11395,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 14.0014,
+    "speed_kmh": 188.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10789,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 875.0,
+   "delta_time_s": 0.2937,
+   "ref": {
+    "time_s": 14.1702,
+    "speed_kmh": 208.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10869,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 14.4639,
+    "speed_kmh": 200.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10973,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 900.0,
+   "delta_time_s": 0.3109,
+   "ref": {
+    "time_s": 14.5895,
+    "speed_kmh": 219.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11438,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 14.9004,
+    "speed_kmh": 214.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11575,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 925.0,
+   "delta_time_s": 0.3185,
+   "ref": {
+    "time_s": 14.9904,
+    "speed_kmh": 229.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11087,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 15.3089,
+    "speed_kmh": 225.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10360,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 950.0,
+   "delta_time_s": 0.3269,
+   "ref": {
+    "time_s": 15.3762,
+    "speed_kmh": 237.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10741,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 15.7031,
+    "speed_kmh": 232.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10811,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 975.0,
+   "delta_time_s": 0.3343,
+   "ref": {
+    "time_s": 15.7493,
+    "speed_kmh": 244.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11041,
+    "gear": 6,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 16.0836,
+    "speed_kmh": 240.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11089,
+    "gear": 6,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1000.0,
+   "delta_time_s": 0.3406,
+   "ref": {
+    "time_s": 16.1121,
+    "speed_kmh": 251.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11380,
+    "gear": 6,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 16.4527,
+    "speed_kmh": 248.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11436,
+    "gear": 6,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1025.0,
+   "delta_time_s": 0.3452,
+   "ref": {
+    "time_s": 16.4648,
+    "speed_kmh": 257.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11419,
+    "gear": 6,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 16.81,
+    "speed_kmh": 257.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11708,
+    "gear": 6,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1050.0,
+   "delta_time_s": 0.346,
+   "ref": {
+    "time_s": 16.8109,
+    "speed_kmh": 263.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10774,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 17.1569,
+    "speed_kmh": 262.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10549,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1075.0,
+   "delta_time_s": 0.3494,
+   "ref": {
+    "time_s": 17.1475,
+    "speed_kmh": 270.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10719,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 17.4969,
+    "speed_kmh": 267.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10802,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1100.0,
+   "delta_time_s": 0.3523,
+   "ref": {
+    "time_s": 17.4777,
+    "speed_kmh": 275.1,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10970,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 17.83,
+    "speed_kmh": 272.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11039,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1125.0,
+   "delta_time_s": 0.3552,
+   "ref": {
+    "time_s": 17.8026,
+    "speed_kmh": 278.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11119,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 18.1578,
+    "speed_kmh": 277.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11196,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1150.0,
+   "delta_time_s": 0.3583,
+   "ref": {
+    "time_s": 18.1232,
+    "speed_kmh": 283.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11238,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 18.4814,
+    "speed_kmh": 281.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11324,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1175.0,
+   "delta_time_s": 0.362,
+   "ref": {
+    "time_s": 18.4377,
+    "speed_kmh": 287.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11374,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 18.7996,
+    "speed_kmh": 285.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11461,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1200.0,
+   "delta_time_s": 0.3653,
+   "ref": {
+    "time_s": 18.7491,
+    "speed_kmh": 291.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11528,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 19.1144,
+    "speed_kmh": 287.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11583,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1225.0,
+   "delta_time_s": 0.3693,
+   "ref": {
+    "time_s": 19.0562,
+    "speed_kmh": 293.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11303,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 19.4255,
+    "speed_kmh": 291.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11714,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1250.0,
+   "delta_time_s": 0.3714,
+   "ref": {
+    "time_s": 19.3613,
+    "speed_kmh": 296.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10706,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 19.7327,
+    "speed_kmh": 294.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11822,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1275.0,
+   "delta_time_s": 0.3739,
+   "ref": {
+    "time_s": 19.6632,
+    "speed_kmh": 299.3,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10645,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 20.0371,
+    "speed_kmh": 297.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11911,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1300.0,
+   "delta_time_s": 0.3761,
+   "ref": {
+    "time_s": 19.9631,
+    "speed_kmh": 301.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10692,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 20.3392,
+    "speed_kmh": 299.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 12003,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1325.0,
+   "delta_time_s": 0.3785,
+   "ref": {
+    "time_s": 20.2607,
+    "speed_kmh": 303.3,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10781,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 20.6392,
+    "speed_kmh": 301.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 12055,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1350.0,
+   "delta_time_s": 0.3811,
+   "ref": {
+    "time_s": 20.5561,
+    "speed_kmh": 305.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10885,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 20.9372,
+    "speed_kmh": 303.6,
+    "throttle_pct": 98.8,
+    "brake_pct": 0.0,
+    "rpm": 12081,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1375.0,
+   "delta_time_s": 0.3765,
+   "ref": {
+    "time_s": 20.8584,
+    "speed_kmh": 292.5,
+    "throttle_pct": 47.9,
+    "brake_pct": 52.1,
+    "rpm": 10368,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 21.2349,
+    "speed_kmh": 302.0,
+    "throttle_pct": 94.6,
+    "brake_pct": 17.0,
+    "rpm": 12027,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 1400.0,
+   "delta_time_s": 0.3553,
+   "ref": {
+    "time_s": 21.1844,
+    "speed_kmh": 254.7,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9574,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 21.5398,
+    "speed_kmh": 283.3,
+    "throttle_pct": 30.8,
+    "brake_pct": 100.0,
+    "rpm": 11211,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1425.0,
+   "delta_time_s": 0.3156,
+   "ref": {
+    "time_s": 21.5781,
+    "speed_kmh": 201.5,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9275,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 21.8937,
+    "speed_kmh": 223.0,
+    "throttle_pct": 6.4,
+    "brake_pct": 100.0,
+    "rpm": 10758,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1450.0,
+   "delta_time_s": 0.2765,
+   "ref": {
+    "time_s": 22.0748,
+    "speed_kmh": 163.5,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9788,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 22.3513,
+    "speed_kmh": 174.3,
+    "throttle_pct": 6.0,
+    "brake_pct": 100.0,
+    "rpm": 10321,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1475.0,
+   "delta_time_s": 0.2322,
+   "ref": {
+    "time_s": 22.6842,
+    "speed_kmh": 135.5,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 7875,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 22.9165,
+    "speed_kmh": 139.1,
+    "throttle_pct": 6.2,
+    "brake_pct": 100.0,
+    "rpm": 8564,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1500.0,
+   "delta_time_s": 0.207,
+   "ref": {
+    "time_s": 23.3924,
+    "speed_kmh": 121.0,
+    "throttle_pct": 19.3,
+    "brake_pct": 0.0,
+    "rpm": 7387,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 23.5994,
+    "speed_kmh": 127.9,
+    "throttle_pct": 22.5,
+    "brake_pct": 0.0,
+    "rpm": 7977,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1525.0,
+   "delta_time_s": 0.2033,
+   "ref": {
+    "time_s": 24.1019,
+    "speed_kmh": 130.3,
+    "throttle_pct": 53.3,
+    "brake_pct": 0.0,
+    "rpm": 8052,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 24.3052,
+    "speed_kmh": 128.9,
+    "throttle_pct": 57.4,
+    "brake_pct": 0.0,
+    "rpm": 8474,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1550.0,
+   "delta_time_s": 0.2012,
+   "ref": {
+    "time_s": 24.7681,
+    "speed_kmh": 146.2,
+    "throttle_pct": 82.7,
+    "brake_pct": 0.0,
+    "rpm": 9144,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 24.9694,
+    "speed_kmh": 143.2,
+    "throttle_pct": 72.7,
+    "brake_pct": 0.0,
+    "rpm": 9176,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1575.0,
+   "delta_time_s": 0.2162,
+   "ref": {
+    "time_s": 25.3426,
+    "speed_kmh": 167.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10533,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 25.5589,
+    "speed_kmh": 164.2,
+    "throttle_pct": 93.8,
+    "brake_pct": 0.0,
+    "rpm": 10334,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1600.0,
+   "delta_time_s": 0.2246,
+   "ref": {
+    "time_s": 25.8548,
+    "speed_kmh": 182.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11589,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 26.0795,
+    "speed_kmh": 184.9,
+    "throttle_pct": 98.2,
+    "brake_pct": 0.0,
+    "rpm": 11558,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1625.0,
+   "delta_time_s": 0.2305,
+   "ref": {
+    "time_s": 26.3207,
+    "speed_kmh": 203.3,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11096,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 26.5512,
+    "speed_kmh": 197.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10759,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1650.0,
+   "delta_time_s": 0.2431,
+   "ref": {
+    "time_s": 26.7468,
+    "speed_kmh": 217.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11260,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 26.9899,
+    "speed_kmh": 212.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11391,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1675.0,
+   "delta_time_s": 0.2491,
+   "ref": {
+    "time_s": 27.1512,
+    "speed_kmh": 227.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11661,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 27.4003,
+    "speed_kmh": 224.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11249,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1700.0,
+   "delta_time_s": 0.255,
+   "ref": {
+    "time_s": 27.54,
+    "speed_kmh": 235.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11695,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 27.7949,
+    "speed_kmh": 233.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10794,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1725.0,
+   "delta_time_s": 0.2559,
+   "ref": {
+    "time_s": 27.9174,
+    "speed_kmh": 241.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11011,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 28.1733,
+    "speed_kmh": 241.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11099,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1750.0,
+   "delta_time_s": 0.2581,
+   "ref": {
+    "time_s": 28.2848,
+    "speed_kmh": 248.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11148,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 28.5429,
+    "speed_kmh": 247.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11360,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1775.0,
+   "delta_time_s": 0.2609,
+   "ref": {
+    "time_s": 28.6433,
+    "speed_kmh": 253.7,
+    "throttle_pct": 84.2,
+    "brake_pct": 0.0,
+    "rpm": 11359,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 28.9042,
+    "speed_kmh": 250.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11442,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1800.0,
+   "delta_time_s": 0.2599,
+   "ref": {
+    "time_s": 29.0021,
+    "speed_kmh": 248.5,
+    "throttle_pct": 4.4,
+    "brake_pct": 88.1,
+    "rpm": 10975,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 29.262,
+    "speed_kmh": 252.7,
+    "throttle_pct": 79.2,
+    "brake_pct": 30.5,
+    "rpm": 11349,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1825.0,
+   "delta_time_s": 0.2495,
+   "ref": {
+    "time_s": 29.3764,
+    "speed_kmh": 230.7,
+    "throttle_pct": 6.9,
+    "brake_pct": 3.1,
+    "rpm": 10116,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 29.6259,
+    "speed_kmh": 238.9,
+    "throttle_pct": 51.8,
+    "brake_pct": 100.0,
+    "rpm": 10883,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1850.0,
+   "delta_time_s": 0.2403,
+   "ref": {
+    "time_s": 29.7753,
+    "speed_kmh": 220.4,
+    "throttle_pct": 56.1,
+    "brake_pct": 0.0,
+    "rpm": 10087,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 30.0156,
+    "speed_kmh": 225.0,
+    "throttle_pct": 46.3,
+    "brake_pct": 100.0,
+    "rpm": 10199,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1875.0,
+   "delta_time_s": 0.2399,
+   "ref": {
+    "time_s": 30.1861,
+    "speed_kmh": 219.5,
+    "throttle_pct": 93.2,
+    "brake_pct": 0.0,
+    "rpm": 10011,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 30.426,
+    "speed_kmh": 216.5,
+    "throttle_pct": 73.6,
+    "brake_pct": 0.0,
+    "rpm": 10078,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1900.0,
+   "delta_time_s": 0.2511,
+   "ref": {
+    "time_s": 30.5906,
+    "speed_kmh": 226.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10393,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 30.8417,
+    "speed_kmh": 218.0,
+    "throttle_pct": 85.6,
+    "brake_pct": 0.0,
+    "rpm": 10227,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1925.0,
+   "delta_time_s": 0.2668,
+   "ref": {
+    "time_s": 30.9829,
+    "speed_kmh": 234.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10709,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 31.2497,
+    "speed_kmh": 224.2,
+    "throttle_pct": 94.8,
+    "brake_pct": 0.0,
+    "rpm": 10387,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1950.0,
+   "delta_time_s": 0.2834,
+   "ref": {
+    "time_s": 31.3629,
+    "speed_kmh": 239.0,
+    "throttle_pct": 78.2,
+    "brake_pct": 0.0,
+    "rpm": 10845,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 31.6463,
+    "speed_kmh": 231.4,
+    "throttle_pct": 92.2,
+    "brake_pct": 0.0,
+    "rpm": 10724,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 1975.0,
+   "delta_time_s": 0.2947,
+   "ref": {
+    "time_s": 31.7382,
+    "speed_kmh": 240.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10887,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 32.0329,
+    "speed_kmh": 236.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10961,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2000.0,
+   "delta_time_s": 0.3012,
+   "ref": {
+    "time_s": 32.1088,
+    "speed_kmh": 245.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11147,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 32.41,
+    "speed_kmh": 241.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11230,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2025.0,
+   "delta_time_s": 0.3062,
+   "ref": {
+    "time_s": 32.4732,
+    "speed_kmh": 248.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11267,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 32.7794,
+    "speed_kmh": 245.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11418,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2050.0,
+   "delta_time_s": 0.312,
+   "ref": {
+    "time_s": 32.8314,
+    "speed_kmh": 254.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11511,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 33.1434,
+    "speed_kmh": 250.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11570,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2075.0,
+   "delta_time_s": 0.3172,
+   "ref": {
+    "time_s": 33.1826,
+    "speed_kmh": 258.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11583,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 33.4998,
+    "speed_kmh": 257.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11797,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2100.0,
+   "delta_time_s": 0.3198,
+   "ref": {
+    "time_s": 33.5293,
+    "speed_kmh": 259.2,
+    "throttle_pct": 67.3,
+    "brake_pct": 90.9,
+    "rpm": 11809,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 33.8491,
+    "speed_kmh": 259.4,
+    "throttle_pct": 99.0,
+    "brake_pct": 70.0,
+    "rpm": 11744,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2125.0,
+   "delta_time_s": 0.3056,
+   "ref": {
+    "time_s": 33.9066,
+    "speed_kmh": 217.3,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10428,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 34.2121,
+    "speed_kmh": 233.2,
+    "throttle_pct": 1.0,
+    "brake_pct": 100.0,
+    "rpm": 10905,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2150.0,
+   "delta_time_s": 0.2756,
+   "ref": {
+    "time_s": 34.3783,
+    "speed_kmh": 170.1,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10123,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 34.6539,
+    "speed_kmh": 177.0,
+    "throttle_pct": 1.0,
+    "brake_pct": 100.0,
+    "rpm": 10264,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2175.0,
+   "delta_time_s": 0.2401,
+   "ref": {
+    "time_s": 35.0012,
+    "speed_kmh": 121.9,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 8618,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 35.2412,
+    "speed_kmh": 131.7,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9322,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2200.0,
+   "delta_time_s": 0.1581,
+   "ref": {
+    "time_s": 35.8545,
+    "speed_kmh": 92.4,
+    "throttle_pct": 0.0,
+    "brake_pct": 13.9,
+    "rpm": 6381,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 36.0126,
+    "speed_kmh": 102.7,
+    "throttle_pct": 1.5,
+    "brake_pct": 52.9,
+    "rpm": 7508,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2225.0,
+   "delta_time_s": 0.0955,
+   "ref": {
+    "time_s": 36.913,
+    "speed_kmh": 81.0,
+    "throttle_pct": 18.1,
+    "brake_pct": 0.0,
+    "rpm": 6080,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 37.0085,
+    "speed_kmh": 80.0,
+    "throttle_pct": 3.8,
+    "brake_pct": 0.0,
+    "rpm": 5944,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2250.0,
+   "delta_time_s": 0.1589,
+   "ref": {
+    "time_s": 37.9303,
+    "speed_kmh": 101.7,
+    "throttle_pct": 56.9,
+    "brake_pct": 0.0,
+    "rpm": 7787,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 38.0892,
+    "speed_kmh": 92.2,
+    "throttle_pct": 58.1,
+    "brake_pct": 0.0,
+    "rpm": 7231,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2275.0,
+   "delta_time_s": 0.2433,
+   "ref": {
+    "time_s": 38.6975,
+    "speed_kmh": 136.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10431,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 38.9409,
+    "speed_kmh": 121.3,
+    "throttle_pct": 75.3,
+    "brake_pct": 0.0,
+    "rpm": 9337,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2300.0,
+   "delta_time_s": 0.3146,
+   "ref": {
+    "time_s": 39.2874,
+    "speed_kmh": 163.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10963,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 39.602,
+    "speed_kmh": 150.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10806,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2325.0,
+   "delta_time_s": 0.3514,
+   "ref": {
+    "time_s": 39.7997,
+    "speed_kmh": 188.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11390,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 40.1511,
+    "speed_kmh": 178.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11391,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2350.0,
+   "delta_time_s": 0.3768,
+   "ref": {
+    "time_s": 40.2639,
+    "speed_kmh": 198.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11251,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 40.6407,
+    "speed_kmh": 198.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10542,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2375.0,
+   "delta_time_s": 0.3788,
+   "ref": {
+    "time_s": 40.7025,
+    "speed_kmh": 212.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11109,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 41.0813,
+    "speed_kmh": 210.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11244,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2400.0,
+   "delta_time_s": 0.3836,
+   "ref": {
+    "time_s": 41.1157,
+    "speed_kmh": 223.1,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11426,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 41.4993,
+    "speed_kmh": 221.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11846,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2425.0,
+   "delta_time_s": 0.3851,
+   "ref": {
+    "time_s": 41.5123,
+    "speed_kmh": 229.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11873,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 41.8974,
+    "speed_kmh": 230.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10897,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2450.0,
+   "delta_time_s": 0.3852,
+   "ref": {
+    "time_s": 41.8968,
+    "speed_kmh": 237.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11102,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 42.282,
+    "speed_kmh": 238.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10975,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2475.0,
+   "delta_time_s": 0.3839,
+   "ref": {
+    "time_s": 42.2704,
+    "speed_kmh": 245.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11070,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 42.6542,
+    "speed_kmh": 245.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11190,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2500.0,
+   "delta_time_s": 0.3866,
+   "ref": {
+    "time_s": 42.6322,
+    "speed_kmh": 250.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11260,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 43.0188,
+    "speed_kmh": 249.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11515,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2525.0,
+   "delta_time_s": 0.3881,
+   "ref": {
+    "time_s": 42.9879,
+    "speed_kmh": 255.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11452,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 43.376,
+    "speed_kmh": 254.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11749,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2550.0,
+   "delta_time_s": 0.3898,
+   "ref": {
+    "time_s": 43.3377,
+    "speed_kmh": 258.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11500,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 43.7275,
+    "speed_kmh": 259.4,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11911,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2575.0,
+   "delta_time_s": 0.3752,
+   "ref": {
+    "time_s": 43.6996,
+    "speed_kmh": 238.7,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10355,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 44.0748,
+    "speed_kmh": 259.7,
+    "throttle_pct": 83.6,
+    "brake_pct": 100.0,
+    "rpm": 11741,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2600.0,
+   "delta_time_s": 0.336,
+   "ref": {
+    "time_s": 44.108,
+    "speed_kmh": 203.8,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 11094,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 44.444,
+    "speed_kmh": 228.8,
+    "throttle_pct": 3.9,
+    "brake_pct": 100.0,
+    "rpm": 10814,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2625.0,
+   "delta_time_s": 0.284,
+   "ref": {
+    "time_s": 44.6043,
+    "speed_kmh": 158.1,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10843,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 44.8883,
+    "speed_kmh": 178.8,
+    "throttle_pct": 1.6,
+    "brake_pct": 100.0,
+    "rpm": 10050,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2650.0,
+   "delta_time_s": 0.2054,
+   "ref": {
+    "time_s": 45.2622,
+    "speed_kmh": 117.8,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 8086,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 45.4676,
+    "speed_kmh": 129.2,
+    "throttle_pct": 0.1,
+    "brake_pct": 100.0,
+    "rpm": 9425,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2675.0,
+   "delta_time_s": 0.1342,
+   "ref": {
+    "time_s": 46.1785,
+    "speed_kmh": 84.3,
+    "throttle_pct": 0.5,
+    "brake_pct": 55.0,
+    "rpm": 5741,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 46.3127,
+    "speed_kmh": 90.6,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 6478,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2700.0,
+   "delta_time_s": 0.1115,
+   "ref": {
+    "time_s": 47.3052,
+    "speed_kmh": 81.9,
+    "throttle_pct": 38.6,
+    "brake_pct": 0.0,
+    "rpm": 6430,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 47.4167,
+    "speed_kmh": 80.9,
+    "throttle_pct": 38.7,
+    "brake_pct": 0.0,
+    "rpm": 6204,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2725.0,
+   "delta_time_s": 0.1871,
+   "ref": {
+    "time_s": 48.233,
+    "speed_kmh": 117.2,
+    "throttle_pct": 84.2,
+    "brake_pct": 0.0,
+    "rpm": 8757,
+    "gear": 3,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 48.4201,
+    "speed_kmh": 106.0,
+    "throttle_pct": 74.8,
+    "brake_pct": 0.0,
+    "rpm": 8162,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2750.0,
+   "delta_time_s": 0.2525,
+   "ref": {
+    "time_s": 48.906,
+    "speed_kmh": 149.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11708,
+    "gear": 3,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 49.1585,
+    "speed_kmh": 139.3,
+    "throttle_pct": 98.9,
+    "brake_pct": 0.0,
+    "rpm": 11069,
+    "gear": 3,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 2775.0,
+   "delta_time_s": 0.2924,
+   "ref": {
+    "time_s": 49.4449,
+    "speed_kmh": 177.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11279,
+    "gear": 4,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 49.7373,
+    "speed_kmh": 173.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11165,
+    "gear": 4,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 2800.0,
+   "delta_time_s": 0.3004,
+   "ref": {
+    "time_s": 49.9276,
+    "speed_kmh": 195.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11277,
+    "gear": 4,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 50.228,
+    "speed_kmh": 193.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10471,
+    "gear": 4,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 2825.0,
+   "delta_time_s": 0.3057,
+   "ref": {
+    "time_s": 50.3692,
+    "speed_kmh": 214.1,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11312,
+    "gear": 5,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 50.6749,
+    "speed_kmh": 210.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11306,
+    "gear": 5,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 2850.0,
+   "delta_time_s": 0.3132,
+   "ref": {
+    "time_s": 50.7764,
+    "speed_kmh": 228.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11824,
+    "gear": 5,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 51.0896,
+    "speed_kmh": 225.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11416,
+    "gear": 5,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 2875.0,
+   "delta_time_s": 0.3224,
+   "ref": {
+    "time_s": 51.1595,
+    "speed_kmh": 240.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10856,
+    "gear": 5,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 51.4819,
+    "speed_kmh": 235.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10844,
+    "gear": 6,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 2900.0,
+   "delta_time_s": 0.3301,
+   "ref": {
+    "time_s": 51.5278,
+    "speed_kmh": 249.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11193,
+    "gear": 6,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 51.8579,
+    "speed_kmh": 244.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11247,
+    "gear": 6,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 2925.0,
+   "delta_time_s": 0.3383,
+   "ref": {
+    "time_s": 51.8819,
+    "speed_kmh": 257.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11531,
+    "gear": 6,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 52.2202,
+    "speed_kmh": 253.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11678,
+    "gear": 6,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 2950.0,
+   "delta_time_s": 0.3415,
+   "ref": {
+    "time_s": 52.2286,
+    "speed_kmh": 262.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10816,
+    "gear": 6,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 52.5701,
+    "speed_kmh": 261.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10914,
+    "gear": 6,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 2975.0,
+   "delta_time_s": 0.3438,
+   "ref": {
+    "time_s": 52.5666,
+    "speed_kmh": 269.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10751,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 52.9104,
+    "speed_kmh": 267.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10691,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3000.0,
+   "delta_time_s": 0.3481,
+   "ref": {
+    "time_s": 52.8967,
+    "speed_kmh": 275.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10970,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 53.2448,
+    "speed_kmh": 273.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11003,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3025.0,
+   "delta_time_s": 0.3506,
+   "ref": {
+    "time_s": 53.221,
+    "speed_kmh": 280.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11169,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 53.5716,
+    "speed_kmh": 277.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11166,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3050.0,
+   "delta_time_s": 0.3545,
+   "ref": {
+    "time_s": 53.5399,
+    "speed_kmh": 283.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11292,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 53.8944,
+    "speed_kmh": 281.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11338,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3075.0,
+   "delta_time_s": 0.3576,
+   "ref": {
+    "time_s": 53.8545,
+    "speed_kmh": 289.3,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11446,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 54.2121,
+    "speed_kmh": 285.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11490,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3100.0,
+   "delta_time_s": 0.3627,
+   "ref": {
+    "time_s": 54.1633,
+    "speed_kmh": 293.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11432,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 54.526,
+    "speed_kmh": 290.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11624,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3125.0,
+   "delta_time_s": 0.3657,
+   "ref": {
+    "time_s": 54.4686,
+    "speed_kmh": 296.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10722,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 54.8343,
+    "speed_kmh": 293.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11037,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3150.0,
+   "delta_time_s": 0.3701,
+   "ref": {
+    "time_s": 54.7708,
+    "speed_kmh": 299.1,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10685,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 55.1409,
+    "speed_kmh": 295.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10684,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3175.0,
+   "delta_time_s": 0.3741,
+   "ref": {
+    "time_s": 55.0703,
+    "speed_kmh": 302.1,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10765,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 55.4443,
+    "speed_kmh": 298.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10668,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3200.0,
+   "delta_time_s": 0.3778,
+   "ref": {
+    "time_s": 55.367,
+    "speed_kmh": 304.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10786,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 55.7447,
+    "speed_kmh": 301.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10748,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3225.0,
+   "delta_time_s": 0.3806,
+   "ref": {
+    "time_s": 55.6616,
+    "speed_kmh": 306.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10850,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 56.0422,
+    "speed_kmh": 304.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10833,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3250.0,
+   "delta_time_s": 0.3842,
+   "ref": {
+    "time_s": 55.9537,
+    "speed_kmh": 308.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10965,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 56.3379,
+    "speed_kmh": 307.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10902,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3275.0,
+   "delta_time_s": 0.3853,
+   "ref": {
+    "time_s": 56.246,
+    "speed_kmh": 307.5,
+    "throttle_pct": 82.5,
+    "brake_pct": 17.5,
+    "rpm": 10944,
+    "gear": 8,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 56.6314,
+    "speed_kmh": 307.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10889,
+    "gear": 8,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 3300.0,
+   "delta_time_s": 0.3814,
+   "ref": {
+    "time_s": 56.5456,
+    "speed_kmh": 292.3,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10420,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 56.927,
+    "speed_kmh": 302.3,
+    "throttle_pct": 49.5,
+    "brake_pct": 52.1,
+    "rpm": 10519,
+    "gear": 8,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3325.0,
+   "delta_time_s": 0.3637,
+   "ref": {
+    "time_s": 56.8743,
+    "speed_kmh": 257.7,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10139,
+    "gear": 8,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 57.238,
+    "speed_kmh": 272.7,
+    "throttle_pct": 2.4,
+    "brake_pct": 100.0,
+    "rpm": 10344,
+    "gear": 8,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3350.0,
+   "delta_time_s": 0.3463,
+   "ref": {
+    "time_s": 57.2541,
+    "speed_kmh": 219.3,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 11018,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 57.6005,
+    "speed_kmh": 224.9,
+    "throttle_pct": 2.8,
+    "brake_pct": 100.0,
+    "rpm": 10890,
+    "gear": 8,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3375.0,
+   "delta_time_s": 0.3307,
+   "ref": {
+    "time_s": 57.6996,
+    "speed_kmh": 189.6,
+    "throttle_pct": 0.6,
+    "brake_pct": 100.0,
+    "rpm": 10883,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 58.0302,
+    "speed_kmh": 198.3,
+    "throttle_pct": 2.3,
+    "brake_pct": 100.0,
+    "rpm": 10383,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3400.0,
+   "delta_time_s": 0.3019,
+   "ref": {
+    "time_s": 58.199,
+    "speed_kmh": 169.3,
+    "throttle_pct": 12.1,
+    "brake_pct": 75.3,
+    "rpm": 10011,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 58.5009,
+    "speed_kmh": 183.7,
+    "throttle_pct": 3.9,
+    "brake_pct": 100.0,
+    "rpm": 9454,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3425.0,
+   "delta_time_s": 0.2705,
+   "ref": {
+    "time_s": 58.7438,
+    "speed_kmh": 162.6,
+    "throttle_pct": 65.0,
+    "brake_pct": 0.0,
+    "rpm": 10237,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 59.0143,
+    "speed_kmh": 168.5,
+    "throttle_pct": 13.0,
+    "brake_pct": 0.0,
+    "rpm": 9168,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3450.0,
+   "delta_time_s": 0.272,
+   "ref": {
+    "time_s": 59.2819,
+    "speed_kmh": 173.8,
+    "throttle_pct": 84.5,
+    "brake_pct": 0.0,
+    "rpm": 10858,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 59.5539,
+    "speed_kmh": 167.2,
+    "throttle_pct": 67.0,
+    "brake_pct": 0.0,
+    "rpm": 9262,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3475.0,
+   "delta_time_s": 0.3078,
+   "ref": {
+    "time_s": 59.7733,
+    "speed_kmh": 189.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11712,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 60.0811,
+    "speed_kmh": 179.0,
+    "throttle_pct": 98.9,
+    "brake_pct": 0.0,
+    "rpm": 9789,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3500.0,
+   "delta_time_s": 0.3267,
+   "ref": {
+    "time_s": 60.2343,
+    "speed_kmh": 202.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11036,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 60.561,
+    "speed_kmh": 194.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10414,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3525.0,
+   "delta_time_s": 0.3437,
+   "ref": {
+    "time_s": 60.6678,
+    "speed_kmh": 213.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11122,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 61.0116,
+    "speed_kmh": 205.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11204,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3550.0,
+   "delta_time_s": 0.3563,
+   "ref": {
+    "time_s": 61.0815,
+    "speed_kmh": 221.3,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11431,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 61.4379,
+    "speed_kmh": 217.4,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11731,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3575.0,
+   "delta_time_s": 0.3658,
+   "ref": {
+    "time_s": 61.481,
+    "speed_kmh": 228.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11677,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 61.8469,
+    "speed_kmh": 225.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11094,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3600.0,
+   "delta_time_s": 0.3697,
+   "ref": {
+    "time_s": 61.8689,
+    "speed_kmh": 235.1,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10744,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 62.2386,
+    "speed_kmh": 234.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10765,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3625.0,
+   "delta_time_s": 0.3717,
+   "ref": {
+    "time_s": 62.246,
+    "speed_kmh": 242.1,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10952,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 62.6177,
+    "speed_kmh": 240.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11055,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3650.0,
+   "delta_time_s": 0.3751,
+   "ref": {
+    "time_s": 62.6142,
+    "speed_kmh": 247.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11129,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 62.9892,
+    "speed_kmh": 247.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11313,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3675.0,
+   "delta_time_s": 0.3778,
+   "ref": {
+    "time_s": 62.9733,
+    "speed_kmh": 252.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11335,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 63.3511,
+    "speed_kmh": 250.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11555,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3700.0,
+   "delta_time_s": 0.3815,
+   "ref": {
+    "time_s": 63.3269,
+    "speed_kmh": 255.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11481,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 63.7085,
+    "speed_kmh": 253.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11732,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3725.0,
+   "delta_time_s": 0.3836,
+   "ref": {
+    "time_s": 63.6775,
+    "speed_kmh": 258.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11618,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 64.0611,
+    "speed_kmh": 257.4,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10369,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3750.0,
+   "delta_time_s": 0.3852,
+   "ref": {
+    "time_s": 64.0251,
+    "speed_kmh": 259.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11645,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 64.4103,
+    "speed_kmh": 258.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10512,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3775.0,
+   "delta_time_s": 0.3873,
+   "ref": {
+    "time_s": 64.3713,
+    "speed_kmh": 260.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10860,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 64.7585,
+    "speed_kmh": 259.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10606,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3800.0,
+   "delta_time_s": 0.3876,
+   "ref": {
+    "time_s": 64.7158,
+    "speed_kmh": 261.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10537,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 65.1034,
+    "speed_kmh": 262.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10693,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3825.0,
+   "delta_time_s": 0.3875,
+   "ref": {
+    "time_s": 65.058,
+    "speed_kmh": 265.1,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10656,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 65.4455,
+    "speed_kmh": 264.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10772,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3850.0,
+   "delta_time_s": 0.3874,
+   "ref": {
+    "time_s": 65.3968,
+    "speed_kmh": 266.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10661,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 65.7842,
+    "speed_kmh": 267.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10797,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3875.0,
+   "delta_time_s": 0.3867,
+   "ref": {
+    "time_s": 65.734,
+    "speed_kmh": 267.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10700,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 66.1207,
+    "speed_kmh": 269.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10828,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3900.0,
+   "delta_time_s": 0.387,
+   "ref": {
+    "time_s": 66.0684,
+    "speed_kmh": 270.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10783,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 66.4554,
+    "speed_kmh": 270.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10942,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3925.0,
+   "delta_time_s": 0.3865,
+   "ref": {
+    "time_s": 66.4,
+    "speed_kmh": 272.2,
+    "throttle_pct": 88.9,
+    "brake_pct": 29.3,
+    "rpm": 10778,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 66.7865,
+    "speed_kmh": 274.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11022,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3950.0,
+   "delta_time_s": 0.3849,
+   "ref": {
+    "time_s": 66.7299,
+    "speed_kmh": 274.0,
+    "throttle_pct": 56.1,
+    "brake_pct": 100.0,
+    "rpm": 10559,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 67.1148,
+    "speed_kmh": 275.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 85.3,
+    "rpm": 10966,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 3975.0,
+   "delta_time_s": 0.3781,
+   "ref": {
+    "time_s": 67.0826,
+    "speed_kmh": 241.1,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10184,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 67.4607,
+    "speed_kmh": 244.1,
+    "throttle_pct": 14.7,
+    "brake_pct": 100.0,
+    "rpm": 9964,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4000.0,
+   "delta_time_s": 0.3729,
+   "ref": {
+    "time_s": 67.4948,
+    "speed_kmh": 193.2,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9798,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 67.8677,
+    "speed_kmh": 202.9,
+    "throttle_pct": 9.5,
+    "brake_pct": 100.0,
+    "rpm": 10079,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4025.0,
+   "delta_time_s": 0.3474,
+   "ref": {
+    "time_s": 68.0046,
+    "speed_kmh": 163.0,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9342,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 68.352,
+    "speed_kmh": 173.6,
+    "throttle_pct": 10.0,
+    "brake_pct": 100.0,
+    "rpm": 10245,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4050.0,
+   "delta_time_s": 0.3215,
+   "ref": {
+    "time_s": 68.5917,
+    "speed_kmh": 145.0,
+    "throttle_pct": 0.8,
+    "brake_pct": 0.0,
+    "rpm": 8626,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 68.9132,
+    "speed_kmh": 148.4,
+    "throttle_pct": 10.6,
+    "brake_pct": 0.0,
+    "rpm": 9349,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4075.0,
+   "delta_time_s": 0.3116,
+   "ref": {
+    "time_s": 69.2266,
+    "speed_kmh": 142.2,
+    "throttle_pct": 54.7,
+    "brake_pct": 0.0,
+    "rpm": 8845,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 69.5382,
+    "speed_kmh": 142.1,
+    "throttle_pct": 52.6,
+    "brake_pct": 0.0,
+    "rpm": 9044,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4100.0,
+   "delta_time_s": 0.3242,
+   "ref": {
+    "time_s": 69.8364,
+    "speed_kmh": 153.0,
+    "throttle_pct": 75.5,
+    "brake_pct": 0.0,
+    "rpm": 9800,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 70.1606,
+    "speed_kmh": 151.0,
+    "throttle_pct": 71.4,
+    "brake_pct": 0.0,
+    "rpm": 9882,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4125.0,
+   "delta_time_s": 0.3341,
+   "ref": {
+    "time_s": 70.392,
+    "speed_kmh": 173.9,
+    "throttle_pct": 95.1,
+    "brake_pct": 0.0,
+    "rpm": 11154,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 70.7261,
+    "speed_kmh": 168.1,
+    "throttle_pct": 94.3,
+    "brake_pct": 0.0,
+    "rpm": 11159,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4150.0,
+   "delta_time_s": 0.3546,
+   "ref": {
+    "time_s": 70.8809,
+    "speed_kmh": 191.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11431,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 71.2355,
+    "speed_kmh": 187.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10934,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4175.0,
+   "delta_time_s": 0.3613,
+   "ref": {
+    "time_s": 71.3329,
+    "speed_kmh": 207.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10737,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 71.6942,
+    "speed_kmh": 203.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11007,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4200.0,
+   "delta_time_s": 0.37,
+   "ref": {
+    "time_s": 71.7529,
+    "speed_kmh": 220.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11411,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 72.1229,
+    "speed_kmh": 216.9,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11356,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4225.0,
+   "delta_time_s": 0.3763,
+   "ref": {
+    "time_s": 72.1516,
+    "speed_kmh": 231.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11639,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 72.5279,
+    "speed_kmh": 229.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10593,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4250.0,
+   "delta_time_s": 0.3833,
+   "ref": {
+    "time_s": 72.532,
+    "speed_kmh": 239.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11145,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 72.9153,
+    "speed_kmh": 237.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10930,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4275.0,
+   "delta_time_s": 0.3847,
+   "ref": {
+    "time_s": 72.9038,
+    "speed_kmh": 247.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11146,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 73.2884,
+    "speed_kmh": 245.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11186,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4300.0,
+   "delta_time_s": 0.3859,
+   "ref": {
+    "time_s": 73.2642,
+    "speed_kmh": 252.3,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11353,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 73.6501,
+    "speed_kmh": 251.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11493,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4325.0,
+   "delta_time_s": 0.3883,
+   "ref": {
+    "time_s": 73.6173,
+    "speed_kmh": 258.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11292,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 74.0056,
+    "speed_kmh": 256.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11451,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4350.0,
+   "delta_time_s": 0.3934,
+   "ref": {
+    "time_s": 73.9615,
+    "speed_kmh": 263.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10428,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 74.3549,
+    "speed_kmh": 261.8,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10888,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4375.0,
+   "delta_time_s": 0.3959,
+   "ref": {
+    "time_s": 74.3001,
+    "speed_kmh": 267.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10696,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 74.696,
+    "speed_kmh": 266.4,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10733,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4400.0,
+   "delta_time_s": 0.398,
+   "ref": {
+    "time_s": 74.6339,
+    "speed_kmh": 271.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10854,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 75.0318,
+    "speed_kmh": 270.2,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10865,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4425.0,
+   "delta_time_s": 0.4008,
+   "ref": {
+    "time_s": 74.9629,
+    "speed_kmh": 275.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10989,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 75.3637,
+    "speed_kmh": 273.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11014,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4450.0,
+   "delta_time_s": 0.4047,
+   "ref": {
+    "time_s": 75.2869,
+    "speed_kmh": 279.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11082,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 75.6916,
+    "speed_kmh": 276.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11108,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4475.0,
+   "delta_time_s": 0.407,
+   "ref": {
+    "time_s": 75.6082,
+    "speed_kmh": 281.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11209,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 76.0151,
+    "speed_kmh": 280.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11264,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4500.0,
+   "delta_time_s": 0.408,
+   "ref": {
+    "time_s": 75.9266,
+    "speed_kmh": 284.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11246,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 76.3346,
+    "speed_kmh": 283.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11380,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4525.0,
+   "delta_time_s": 0.4087,
+   "ref": {
+    "time_s": 76.2424,
+    "speed_kmh": 285.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11321,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 76.6511,
+    "speed_kmh": 286.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11467,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4550.0,
+   "delta_time_s": 0.4088,
+   "ref": {
+    "time_s": 76.5558,
+    "speed_kmh": 288.3,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11430,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 76.9646,
+    "speed_kmh": 288.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11545,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4575.0,
+   "delta_time_s": 0.409,
+   "ref": {
+    "time_s": 76.8672,
+    "speed_kmh": 290.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11494,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 77.2762,
+    "speed_kmh": 290.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11623,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4600.0,
+   "delta_time_s": 0.4095,
+   "ref": {
+    "time_s": 77.1772,
+    "speed_kmh": 290.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11507,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 77.5868,
+    "speed_kmh": 291.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11705,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4625.0,
+   "delta_time_s": 0.4098,
+   "ref": {
+    "time_s": 77.4858,
+    "speed_kmh": 292.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11544,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 77.8956,
+    "speed_kmh": 292.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11673,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4650.0,
+   "delta_time_s": 0.411,
+   "ref": {
+    "time_s": 77.7924,
+    "speed_kmh": 294.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11590,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 78.2034,
+    "speed_kmh": 293.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11713,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4675.0,
+   "delta_time_s": 0.4126,
+   "ref": {
+    "time_s": 78.0978,
+    "speed_kmh": 295.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11647,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 78.5104,
+    "speed_kmh": 294.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11762,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4700.0,
+   "delta_time_s": 0.4148,
+   "ref": {
+    "time_s": 78.4023,
+    "speed_kmh": 296.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11649,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 78.8171,
+    "speed_kmh": 294.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11776,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4725.0,
+   "delta_time_s": 0.4171,
+   "ref": {
+    "time_s": 78.7063,
+    "speed_kmh": 296.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11649,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 79.1235,
+    "speed_kmh": 295.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11831,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4750.0,
+   "delta_time_s": 0.4189,
+   "ref": {
+    "time_s": 79.0106,
+    "speed_kmh": 295.3,
+    "throttle_pct": 29.7,
+    "brake_pct": 70.3,
+    "rpm": 11654,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 79.4295,
+    "speed_kmh": 294.2,
+    "throttle_pct": 98.7,
+    "brake_pct": 28.1,
+    "rpm": 11759,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4775.0,
+   "delta_time_s": 0.4201,
+   "ref": {
+    "time_s": 79.3297,
+    "speed_kmh": 264.0,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10175,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 79.7499,
+    "speed_kmh": 273.9,
+    "throttle_pct": 61.8,
+    "brake_pct": 100.0,
+    "rpm": 11347,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4800.0,
+   "delta_time_s": 0.3683,
+   "ref": {
+    "time_s": 79.7337,
+    "speed_kmh": 201.1,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10066,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 80.1019,
+    "speed_kmh": 227.5,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 10407,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4825.0,
+   "delta_time_s": 0.3293,
+   "ref": {
+    "time_s": 80.2266,
+    "speed_kmh": 161.3,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9376,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 80.5559,
+    "speed_kmh": 177.9,
+    "throttle_pct": 0.0,
+    "brake_pct": 100.0,
+    "rpm": 9892,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4850.0,
+   "delta_time_s": 0.2882,
+   "ref": {
+    "time_s": 80.8278,
+    "speed_kmh": 141.9,
+    "throttle_pct": 0.0,
+    "brake_pct": 21.6,
+    "rpm": 8327,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 81.116,
+    "speed_kmh": 145.5,
+    "throttle_pct": 0.4,
+    "brake_pct": 100.0,
+    "rpm": 9348,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4875.0,
+   "delta_time_s": 0.2926,
+   "ref": {
+    "time_s": 81.4849,
+    "speed_kmh": 133.3,
+    "throttle_pct": 50.7,
+    "brake_pct": 0.0,
+    "rpm": 8383,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 81.7774,
+    "speed_kmh": 132.6,
+    "throttle_pct": 51.2,
+    "brake_pct": 0.0,
+    "rpm": 8527,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4900.0,
+   "delta_time_s": 0.2982,
+   "ref": {
+    "time_s": 82.1333,
+    "speed_kmh": 145.4,
+    "throttle_pct": 67.2,
+    "brake_pct": 0.0,
+    "rpm": 9140,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 82.4314,
+    "speed_kmh": 143.1,
+    "throttle_pct": 75.5,
+    "brake_pct": 0.0,
+    "rpm": 9410,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4925.0,
+   "delta_time_s": 0.3026,
+   "ref": {
+    "time_s": 82.7115,
+    "speed_kmh": 167.7,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10383,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 83.0141,
+    "speed_kmh": 166.3,
+    "throttle_pct": 97.7,
+    "brake_pct": 0.0,
+    "rpm": 10855,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4950.0,
+   "delta_time_s": 0.3048,
+   "ref": {
+    "time_s": 83.2216,
+    "speed_kmh": 188.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11310,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 83.5263,
+    "speed_kmh": 184.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11216,
+    "gear": 4,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 4975.0,
+   "delta_time_s": 0.3158,
+   "ref": {
+    "time_s": 83.6811,
+    "speed_kmh": 202.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11354,
+    "gear": 4,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 83.9969,
+    "speed_kmh": 202.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10903,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5000.0,
+   "delta_time_s": 0.3142,
+   "ref": {
+    "time_s": 84.1118,
+    "speed_kmh": 214.8,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11166,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 84.426,
+    "speed_kmh": 216.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11391,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5025.0,
+   "delta_time_s": 0.311,
+   "ref": {
+    "time_s": 84.5216,
+    "speed_kmh": 224.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11678,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 84.8326,
+    "speed_kmh": 227.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10749,
+    "gear": 5,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5050.0,
+   "delta_time_s": 0.3088,
+   "ref": {
+    "time_s": 84.9119,
+    "speed_kmh": 235.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11185,
+    "gear": 5,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 85.2207,
+    "speed_kmh": 237.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10914,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5075.0,
+   "delta_time_s": 0.3071,
+   "ref": {
+    "time_s": 85.2888,
+    "speed_kmh": 242.5,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10965,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 85.5959,
+    "speed_kmh": 243.5,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11206,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5100.0,
+   "delta_time_s": 0.3061,
+   "ref": {
+    "time_s": 85.6555,
+    "speed_kmh": 247.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11220,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 85.9616,
+    "speed_kmh": 250.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11401,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5125.0,
+   "delta_time_s": 0.3039,
+   "ref": {
+    "time_s": 86.0131,
+    "speed_kmh": 254.6,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11434,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 86.317,
+    "speed_kmh": 256.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11155,
+    "gear": 6,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5150.0,
+   "delta_time_s": 0.3034,
+   "ref": {
+    "time_s": 86.3626,
+    "speed_kmh": 259.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11342,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 86.666,
+    "speed_kmh": 261.7,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10760,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5175.0,
+   "delta_time_s": 0.3014,
+   "ref": {
+    "time_s": 86.707,
+    "speed_kmh": 263.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10602,
+    "gear": 6,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 87.0084,
+    "speed_kmh": 265.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10553,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5200.0,
+   "delta_time_s": 0.3001,
+   "ref": {
+    "time_s": 87.0451,
+    "speed_kmh": 267.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10706,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 87.3452,
+    "speed_kmh": 269.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10791,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5225.0,
+   "delta_time_s": 0.2994,
+   "ref": {
+    "time_s": 87.3797,
+    "speed_kmh": 270.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 10825,
+    "gear": 7,
+    "drs": false
+   },
+   "comp": {
+    "time_s": 87.6791,
+    "speed_kmh": 272.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 10920,
+    "gear": 7,
+    "drs": false
+   }
+  },
+  {
+   "distance_m": 5250.0,
+   "delta_time_s": 0.299,
+   "ref": {
+    "time_s": 87.7093,
+    "speed_kmh": 274.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11030,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 88.0083,
+    "speed_kmh": 276.1,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11081,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 5275.0,
+   "delta_time_s": 0.2976,
+   "ref": {
+    "time_s": 88.0343,
+    "speed_kmh": 280.2,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11129,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 88.3319,
+    "speed_kmh": 280.6,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11295,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 5300.0,
+   "delta_time_s": 0.2976,
+   "ref": {
+    "time_s": 88.3526,
+    "speed_kmh": 284.9,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11261,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 88.6503,
+    "speed_kmh": 284.4,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11451,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 5325.0,
+   "delta_time_s": 0.3002,
+   "ref": {
+    "time_s": 88.6662,
+    "speed_kmh": 288.4,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11411,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 88.9665,
+    "speed_kmh": 287.0,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11536,
+    "gear": 7,
+    "drs": true
+   }
+  },
+  {
+   "distance_m": 5350.0,
+   "delta_time_s": 0.301,
+   "ref": {
+    "time_s": 88.9777,
+    "speed_kmh": 290.0,
+    "throttle_pct": 100.0,
+    "brake_pct": 0.0,
+    "rpm": 11494,
+    "gear": 7,
+    "drs": true
+   },
+   "comp": {
+    "time_s": 89.2787,
+    "speed_kmh": 290.3,
+    "throttle_pct": 99.0,
+    "brake_pct": 0.0,
+    "rpm": 11508,
+    "gear": 7,
+    "drs": true
+   }
+  }
+ ],
+ "insights": [
+  {
+   "assumptions": [
+    "Ambas as voltas foram cronometradas em Qualifying no mesmo traçado (Sakhir).",
+    "Temperatura de pista reportada: 21.5 °C.",
+    "Compostos idênticos nas duas voltas (SOFT)."
+   ],
+   "confidence": 0.99,
+   "distance_end_m": 1100,
+   "distance_start_m": 525,
+   "driver_code": "LEC",
+   "engine": "apex-strategy-hs",
+   "evidence": {
+    "apex_distance_m": 725,
+    "braking_point_comp_m": 575,
+    "braking_point_diff_m": 0,
+    "braking_point_ref_m": 575,
+    "cause": "APEX_SPEED",
+    "corner": "C1",
+    "corner_label": "C1",
+    "distance_end_m": 1100,
+    "distance_start_m": 525,
+    "full_throttle_distance_comp_m": 850,
+    "full_throttle_distance_ref_m": 850,
+    "id": "seg-525-1100",
+    "is_corner": true,
+    "max_speed_comp_kmh": 319,
+    "max_speed_ref_kmh": 322,
+    "min_speed_comp_kmh": 67.7,
+    "min_speed_ref_kmh": 75.5,
+    "time_loss_s": 0.2218
+   },
+   "id": "seg-525-1100",
+   "limitations": [],
+   "summary": "C1 (525–1100 m): 0.222 s perdidos. LEC passou pelo ápice a 67.7 km/h contra 75.5 km/h da referência (7.8 km/h a menos) em curva lenta, limitada por tração.",
+   "time_loss_s": 0.2218
+  },
+  {
+   "assumptions": [
+    "Ambas as voltas foram cronometradas em Qualifying no mesmo traçado (Sakhir).",
+    "Temperatura de pista reportada: 21.5 °C.",
+    "Compostos idênticos nas duas voltas (SOFT)."
+   ],
+   "confidence": 0.7993636,
+   "distance_end_m": 2525,
+   "distance_start_m": 2050,
+   "driver_code": "LEC",
+   "engine": "apex-strategy-hs",
+   "evidence": {
+    "apex_distance_m": 2225,
+    "braking_point_comp_m": 2100,
+    "braking_point_diff_m": 0,
+    "braking_point_ref_m": 2100,
+    "cause": "THROTTLE_APPLICATION",
+    "corner": "C3",
+    "corner_label": "C3",
+    "distance_end_m": 2525,
+    "distance_start_m": 2050,
+    "full_throttle_distance_comp_m": 2300,
+    "full_throttle_distance_ref_m": 2275,
+    "id": "seg-2050-2525",
+    "is_corner": true,
+    "max_speed_comp_kmh": 259.4,
+    "max_speed_ref_kmh": 259.2,
+    "min_speed_comp_kmh": 80,
+    "min_speed_ref_kmh": 81,
+    "time_loss_s": 0.0761
+   },
+   "id": "seg-2050-2525",
+   "limitations": [],
+   "summary": "C3 (2050–2525 m): 0.076 s perdidos. LEC só atingiu 95% de acelerador em 2300 m, 25 m depois da referência na saída da curva. A velocidade mínima do trecho foi equivalente (80.0 contra 81.0 km/h).",
+   "time_loss_s": 0.0761
+  },
+  {
+   "assumptions": [
+    "Ambas as voltas foram cronometradas em Qualifying no mesmo traçado (Sakhir).",
+    "Temperatura de pista reportada: 21.5 °C.",
+    "Compostos idênticos nas duas voltas (SOFT)."
+   ],
+   "confidence": 0.7715096,
+   "distance_end_m": 2100,
+   "distance_start_m": 1725,
+   "driver_code": "LEC",
+   "engine": "apex-strategy-hs",
+   "evidence": {
+    "apex_distance_m": 1875,
+    "braking_point_comp_m": 1800,
+    "braking_point_diff_m": 0,
+    "braking_point_ref_m": 1800,
+    "cause": "THROTTLE_APPLICATION",
+    "corner": "Reta C2→C3",
+    "corner_label": "Reta C2→C3",
+    "distance_end_m": 2100,
+    "distance_start_m": 1725,
+    "full_throttle_distance_comp_m": 1975,
+    "full_throttle_distance_ref_m": 1900,
+    "id": "seg-1725-2100",
+    "is_corner": false,
+    "max_speed_comp_kmh": 259.4,
+    "max_speed_ref_kmh": 259.2,
+    "min_speed_comp_kmh": 216.5,
+    "min_speed_ref_kmh": 219.5,
+    "time_loss_s": 0.0639
+   },
+   "id": "seg-1725-2100",
+   "limitations": [],
+   "summary": "Reta C2→C3 (1725–2100 m): 0.064 s perdidos. LEC só atingiu 95% de acelerador em 1975 m, 75 m depois da referência neste trecho. A velocidade mínima também foi 3.0 km/h menor (216.5 contra 219.5 km/h), mas a retomada domina a perda.",
+   "time_loss_s": 0.0639
+  }
+ ],
+ "quality_audit": {
+  "max_interpolation_gap_m": 39.33,
+  "discontinuous_segments": 0,
+  "coverage_pct": 100.0,
+  "confidence_score": 0.99,
+  "median_sample_interval_s": 0.24,
+  "raw_samples_ref": 346,
+  "raw_samples_comp": 350,
+  "delta_closure_error_s": 0.0,
+  "source_notes": "Distância integrada por regra trapezoidal sobre 346/350 amostras brutas de ECU (intervalo mediano 0.240 s); reamostragem linear limitada a lacunas de 75.0 m."
+ }
+}

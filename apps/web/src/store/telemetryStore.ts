@@ -34,7 +34,7 @@ function idle<T>(): RemoteResource<T> {
 export type BottomTab = 'race_control' | 'stints' | 'laps';
 export type InsightTab = 'insights' | 'speed_traps' | 'microsectors';
 
-interface TelemetryState {
+export interface TelemetryState {
   // Seleção ativa
   sessionYear: number;
   sessionKey: number | null;

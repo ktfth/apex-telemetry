@@ -137,7 +137,7 @@ Guia completo, ingestão para PostgreSQL e observabilidade:
 | --- | --- | --- |
 | C++23 | `(cd build && ctest)` | 3 binários — integração de distância, normalização do eixo, detecção de curvas, JSON, MoTeC, SHA-256, ISO-8601, parsing da OpenF1 contra payloads reais servidos por HTTP |
 | Haskell | `(cd services/strategy-hs && cabal test)` | 15 propriedades QuickCheck sobre o domínio |
-| TypeScript | `pnpm test` | 18 testes — contrato do cliente, máquina de estados da store |
+| TypeScript | `pnpm test` | 31 testes — contrato do cliente, máquina de estados da store e renderização contra respostas reais gravadas do gateway |
 | Pilha real | `node scripts/verify-stack.mjs` | 53 verificações contra a OpenF1 ao vivo |
 
 ---

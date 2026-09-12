@@ -138,7 +138,7 @@ export const CircuitMap: React.FC = () => {
         )}
 
         {geometry && projection && (
-          <svg viewBox={`0 0 ${VIEWPORT} ${VIEWPORT}`} className="h-full w-full">
+          <svg data-testid="circuit-track" viewBox={`0 0 ${VIEWPORT} ${VIEWPORT}`} className="h-full w-full">
             <path
               d={projection.path}
               fill="none"

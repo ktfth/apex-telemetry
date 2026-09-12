@@ -259,7 +259,12 @@ export const TelemetryPlots: React.FC = () => {
             </div>
           </div>
           <div className="relative h-20 w-full">
-            <svg viewBox={`0 0 ${CHART_WIDTH} ${DELTA_HEIGHT}`} preserveAspectRatio="none" className="h-full w-full">
+            <svg
+              data-testid="chart-delta"
+              viewBox={`0 0 ${CHART_WIDTH} ${DELTA_HEIGHT}`}
+              preserveAspectRatio="none"
+              className="h-full w-full"
+            >
               <Overlay height={DELTA_HEIGHT} keyPrefix="delta" />
               <line x1={0} y1={deltaZeroY} x2={CHART_WIDTH} y2={deltaZeroY} stroke="#374151" strokeDasharray="3 3" />
               <path d={deltaAreaPath} fill="#ef4444" fillOpacity="0.15" />
@@ -282,7 +287,12 @@ export const TelemetryPlots: React.FC = () => {
             </div>
           </div>
           <div className="relative h-32 w-full">
-            <svg viewBox={`0 0 ${CHART_WIDTH} ${SPEED_HEIGHT}`} preserveAspectRatio="none" className="h-full w-full">
+            <svg
+              data-testid="chart-speed"
+              viewBox={`0 0 ${CHART_WIDTH} ${SPEED_HEIGHT}`}
+              preserveAspectRatio="none"
+              className="h-full w-full"
+            >
               <Overlay height={SPEED_HEIGHT} keyPrefix="speed" />
               {scales.speedTicks.map((tick) => (
                 <line
@@ -318,7 +328,12 @@ export const TelemetryPlots: React.FC = () => {
             </div>
           </div>
           <div className="relative h-24 w-full">
-            <svg viewBox={`0 0 ${CHART_WIDTH} ${PEDALS_HEIGHT}`} preserveAspectRatio="none" className="h-full w-full">
+            <svg
+              data-testid="chart-pedals"
+              viewBox={`0 0 ${CHART_WIDTH} ${PEDALS_HEIGHT}`}
+              preserveAspectRatio="none"
+              className="h-full w-full"
+            >
               <Overlay height={PEDALS_HEIGHT} keyPrefix="pedals" />
               <line x1={0} y1={PEDALS_HEIGHT / 2} x2={CHART_WIDTH} y2={PEDALS_HEIGHT / 2} stroke="#1a202c" strokeDasharray="2 2" />
               <path d={brakeRefPath} fill="none" stroke="#ef4444" strokeWidth="2" />

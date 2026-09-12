@@ -282,7 +282,7 @@ export const BottomPanel: React.FC = () => {
                             </td>
                             <td className="px-2 py-1">{stint.stint_number}</td>
                             <td className="px-2 py-1">
-                              <TyreBadge compound={stint.compound} laps={stint.lap_count} />
+                              <TyreBadge compound={stint.compound} />
                             </td>
                             <td className="px-2 py-1 tabular-nums">
                               L{stint.lap_start}→L{stint.lap_end}

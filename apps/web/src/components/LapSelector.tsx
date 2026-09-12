@@ -230,7 +230,7 @@ export const LapSelector: React.FC = () => {
                 )}
               </div>
               <div className="flex shrink-0 items-center space-x-1.5">
-                <TyreBadge compound={lap.compound} laps={lap.tyre_age_laps} />
+                <TyreBadge compound={lap.compound} ageLaps={lap.tyre_age_laps} />
                 <LapKindBadge kind={lap.lap_kind} />
               </div>
             </button>

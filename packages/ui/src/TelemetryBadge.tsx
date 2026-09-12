@@ -4,26 +4,32 @@ import { COLORS } from './tokens';
 
 export interface TyreBadgeProps {
   compound: TyreCompound;
-  laps?: number;
+  /**
+   * Voltas de uso do pneu naquele momento — não o número da volta nem o tamanho
+   * do stint. Confundir os três é fácil e muda completamente a leitura.
+   */
+  ageLaps?: number;
   className?: string;
 }
 
-export const TyreBadge: React.FC<TyreBadgeProps> = ({ compound, laps, className = '' }) => {
+export const TyreBadge: React.FC<TyreBadgeProps> = ({ compound, ageLaps, className = '' }) => {
   const color = COLORS.tyres[compound] || COLORS.tyres.UNKNOWN;
   const initial = compound.charAt(0).toUpperCase();
+  const known = compound !== 'UNKNOWN';
 
   return (
     <div
       className={`inline-flex items-center gap-1.5 px-2 py-0.5 border border-[#232936] bg-[#12161c] text-xs font-mono font-medium ${className}`}
-      title={`Composto: ${compound}${laps !== undefined ? ` (${laps} voltas)` : ''}`}
+      title={
+        known
+          ? `Composto ${compound}${ageLaps !== undefined ? ` · ${ageLaps} volta(s) de uso` : ''}`
+          : 'Composto não informado pela origem de dados'
+      }
     >
-      <span
-        className="w-2.5 h-2.5 rounded-full inline-block"
-        style={{ backgroundColor: color }}
-      />
-      <span className="text-neutral-200">{initial}</span>
-      {laps !== undefined && (
-        <span className="text-neutral-500 text-[10px] tabular-nums">L{laps}</span>
+      <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: color }} />
+      <span className={known ? 'text-neutral-200' : 'text-neutral-500'}>{known ? initial : '—'}</span>
+      {ageLaps !== undefined && (
+        <span className="text-neutral-500 text-[10px] tabular-nums">{ageLaps}v</span>
       )}
     </div>
   );
