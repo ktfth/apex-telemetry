@@ -1,23 +1,18 @@
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE StrictData #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StrictData #-}
 
+-- | Tipos de domínio da ApexTelemetry.
+--
+-- Todos os valores aqui descrevem medições reais recebidas do motor de
+-- alinhamento espacial em C++; nenhum construtor fabrica telemetria.
 module Apex.Domain.Types where
 
-import GHC.Generics (Generic)
 import Data.Text (Text)
-import Data.Time.Clock (UTCTime)
+import qualified Data.Text as T
+import GHC.Generics (Generic)
 
--- | Status da sessão de corrida ou qualificação
-data SessionStatus
-  = SessionScheduled
-  | SessionLive
-  | SessionYellowFlag
-  | SessionRedFlag
-  | SessionFinished
-  deriving (Show, Eq, Generic)
-
--- | Composto de pneus oficial FIA / Pirelli
+-- | Composto oficial FIA/Pirelli.
 data TyreCompound
   = Soft
   | Medium
@@ -27,38 +22,123 @@ data TyreCompound
   | UnknownCompound
   deriving (Show, Eq, Ord, Generic)
 
--- | Classificação categórica e formal de voltas
+parseCompound :: Text -> TyreCompound
+parseCompound raw =
+  case T.toUpper (T.strip raw) of
+    "SOFT" -> Soft
+    "MEDIUM" -> Medium
+    "HARD" -> Hard
+    "INTERMEDIATE" -> Intermediate
+    "WET" -> Wet
+    _ -> UnknownCompound
+
+renderCompound :: TyreCompound -> Text
+renderCompound Soft = "SOFT"
+renderCompound Medium = "MEDIUM"
+renderCompound Hard = "HARD"
+renderCompound Intermediate = "INTERMEDIATE"
+renderCompound Wet = "WET"
+renderCompound UnknownCompound = "UNKNOWN"
+
+-- | Classificação categórica da volta.
 data LapKind
   = FlyingLap
   | OutLap
   | InLap
-  | InvalidLap !Text
+  | InvalidLap Text
   | SafetyCarAffected
   deriving (Show, Eq, Generic)
 
--- | Volta normalizada para análise de domínio
+-- | Volta normalizada para análise de ritmo.
 data Lap = Lap
-  { lapNumber    :: !Int
-  , lapTimeS     :: !Double
-  , lapKind      :: !LapKind
-  , lapCompound  :: !TyreCompound
-  , stintNumber  :: !Int
-  , coveragePct  :: !Double
-  } deriving (Show, Eq, Generic)
+  { lapNumber :: Int
+  , lapTimeS :: Double
+  , lapKind :: LapKind
+  , lapCompound :: TyreCompound
+  , stintNumber :: Int
+  , tyreAgeLaps :: Int
+  , coveragePct :: Double
+  }
+  deriving (Show, Eq, Generic)
 
--- | Evidência empírica observada no trecho de telemetria
-data Evidence = Evidence
-  { distanceStartM        :: !Double
-  , distanceEndM          :: !Double
-  , timeDeltaS            :: !Double
-  , minSpeedRefKmh        :: !Double
-  , minSpeedCompKmh       :: !Double
-  , fullThrottleDistRefM  :: !Double
-  , fullThrottleDistCompM :: !Double
-  , brakingPointDiffM     :: !Double
-  } deriving (Show, Eq, Generic)
+-- | Causa dominante da perda de tempo, determinada pelo motor numérico.
+data LossCause
+  = ApexSpeed
+  | ThrottleApplication
+  | BrakingPoint
+  | TopSpeed
+  | MixedCause
+  deriving (Show, Eq, Generic)
 
--- | Nível de confiança garantido no intervalo [0.0, 1.0]
+parseLossCause :: Text -> LossCause
+parseLossCause raw =
+  case T.toUpper (T.strip raw) of
+    "APEX_SPEED" -> ApexSpeed
+    "THROTTLE_APPLICATION" -> ThrottleApplication
+    "BRAKING_POINT" -> BrakingPoint
+    "TOP_SPEED" -> TopSpeed
+    _ -> MixedCause
+
+renderLossCause :: LossCause -> Text
+renderLossCause ApexSpeed = "APEX_SPEED"
+renderLossCause ThrottleApplication = "THROTTLE_APPLICATION"
+renderLossCause BrakingPoint = "BRAKING_POINT"
+renderLossCause TopSpeed = "TOP_SPEED"
+renderLossCause MixedCause = "MIXED"
+
+-- | Evidência medida em um trecho da volta.
+data Segment = Segment
+  { segmentId :: Text
+  , cornerLabel :: Text
+  , distanceStartM :: Double
+  , distanceEndM :: Double
+  , apexDistanceM :: Double
+  , timeLossS :: Double
+  , minSpeedRefKmh :: Double
+  , minSpeedCompKmh :: Double
+  , maxSpeedRefKmh :: Double
+  , maxSpeedCompKmh :: Double
+  , fullThrottleDistRefM :: Double
+  , fullThrottleDistCompM :: Double
+  , brakingPointRefM :: Double
+  , brakingPointCompM :: Double
+  , brakingPointDiffM :: Double
+  , segmentIsCorner :: Bool
+  , segmentCause :: LossCause
+  , segmentConfidence :: Double
+  }
+  deriving (Show, Eq, Generic)
+
+-- | Cabeçalho de uma volta comparada.
+data LapRef = LapRef
+  { refDriverNumber :: Int
+  , refDriverCode :: Text
+  , refLapNumber :: Int
+  , refLapTimeS :: Double
+  , refCompound :: TyreCompound
+  , refTyreAgeLaps :: Int
+  }
+  deriving (Show, Eq, Generic)
+
+-- | Contexto da sessão em que a comparação ocorreu.
+data SessionContext = SessionContext
+  { sessionKey :: Int
+  , circuitName :: Text
+  , sessionName :: Text
+  , trackTemperatureC :: Maybe Double
+  }
+  deriving (Show, Eq, Generic)
+
+-- | Pedido completo de explicabilidade.
+data InsightRequest = InsightRequest
+  { requestSession :: SessionContext
+  , requestReference :: LapRef
+  , requestComparison :: LapRef
+  , requestSegments :: [Segment]
+  }
+  deriving (Show, Eq, Generic)
+
+-- | Nível de confiança garantido no intervalo [0.0, 1.0].
 newtype Confidence = Confidence Double
   deriving (Show, Eq, Ord, Generic)
 
@@ -68,54 +148,70 @@ mkConfidence c = Confidence (max 0.0 (min 1.0 c))
 confidenceValue :: Confidence -> Double
 confidenceValue (Confidence c) = c
 
--- | Insight explicável auditável e estritamente determinístico
+-- | Insight explicável, auditável e determinístico.
 data Insight = Insight
-  { insightId     :: !Text
-  , driverCode    :: !Text
-  , evidence      :: !Evidence
-  , explanation   :: !Text
-  , assumptions   :: ![Text]
-  , limitations   :: ![Text]
-  , confidence    :: !Confidence
-  } deriving (Show, Eq, Generic)
+  { insightId :: Text
+  , driverCode :: Text
+  , insightSegment :: Segment
+  , explanation :: Text
+  , assumptions :: [Text]
+  , limitations :: [Text]
+  , confidence :: Confidence
+  }
+  deriving (Show, Eq, Generic)
 
--- | Stint com pneu e ciclo de vida
-data Stint = Stint
-  { stintNum          :: !Int
-  , driverNum         :: !Int
-  , stintCompound     :: !TyreCompound
-  , lapStart          :: !Int
-  , lapEnd            :: !Int
-  , lapsCount         :: !Int
-  , avgLapTimeS       :: !Double
-  , degradationRate   :: !Double -- Segundos perdidos por volta
-  , pitStopDurationS  :: !(Maybe Double)
-  } deriving (Show, Eq, Generic)
+-- | Volta observada dentro de um stint, usada na regressão de degradação.
+data StintLap = StintLap
+  { stintLapNumber :: Int
+  , stintLapTimeS :: Double
+  , stintLapTyreAge :: Int
+  , stintLapValid :: Bool
+  }
+  deriving (Show, Eq, Generic)
 
--- | Estado de telemetria do piloto
-data DriverState = DriverState
-  { currentDriverNum :: !Int
-  , currentStintNum  :: !Int
-  , activeCompound   :: !TyreCompound
-  , tyreAgeLaps      :: !Int
-  , inPitLane        :: !Bool
-  } deriving (Show, Eq, Generic)
+-- | Stint real medido na sessão.
+data StintObservation = StintObservation
+  { obsDriverNumber :: Int
+  , obsStintNumber :: Int
+  , obsCompound :: TyreCompound
+  , obsTyreAgeAtStart :: Int
+  , obsLaps :: [StintLap]
+  }
+  deriving (Show, Eq, Generic)
 
--- | Recomendação estratégica pura
+data DegradationRequest = DegradationRequest
+  { degTrackTemperatureC :: Maybe Double
+  , degTotalSessionLaps :: Maybe Int
+  , degStints :: [StintObservation]
+  }
+  deriving (Show, Eq, Generic)
+
+-- | Recomendação determinística de troca de pneu.
 data StrategyRecommendation = StrategyRecommendation
-  { targetLap             :: !Int
-  , nextCompound          :: !TyreCompound
-  , projectedDeltaGainS   :: !Double
-  , rationalBasis         :: !Text
-  , recConfidence         :: !Confidence
-  } deriving (Show, Eq, Generic)
+  { targetLap :: Int
+  , nextCompound :: TyreCompound
+  , projectedDeltaGainS :: Double
+  , rationalBasis :: Text
+  , recConfidence :: Confidence
+  }
+  deriving (Show, Eq, Generic)
 
--- | Evento oficial de direção de prova
-data RaceControlEvent = RaceControlEvent
-  { occurredAt     :: !UTCTime
-  , category       :: !Text
-  , flag           :: !(Maybe Text)
-  , eventMessage   :: !Text
-  , sector         :: !(Maybe Int)
-  , eventDriver    :: !(Maybe Int)
-  } deriving (Show, Eq, Generic)
+-- | Resultado da análise de um stint.
+data StintAnalysis = StintAnalysis
+  { anDriverNumber :: Int
+  , anStintNumber :: Int
+  , anCompound :: TyreCompound
+  , anLapStart :: Int
+  , anLapEnd :: Int
+  , anLapCount :: Int
+  , anRepresentativeLaps :: Int
+  , anAvgLapTimeS :: Double
+  , anBestLapTimeS :: Double
+  , anObservedDegradationSPerLap :: Double
+  , anPredictedPaceLossS :: Double
+  , anCliffLap :: Int
+  , anInCliff :: Bool
+  , anRecommendation :: Maybe StrategyRecommendation
+  , anNotes :: [Text]
+  }
+  deriving (Show, Eq, Generic)

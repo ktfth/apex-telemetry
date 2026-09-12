@@ -1,40 +1,73 @@
 import { create } from 'zustand';
-import type { LapComparison } from '@apex-telemetry/contracts';
-import { DEMO_LAP_COMPARISON } from '../fixtures/demoBahrain2024';
-import { fetchLapComparison } from '../lib/apiClient';
+import type {
+  CircuitGeometry,
+  LapComparison,
+  LiveTelemetryTick
+} from '@apex-telemetry/contracts';
+import {
+  ApiClientError,
+  fetchCircuitGeometry,
+  fetchLapComparison,
+  type ComparisonQuery
+} from '../lib/apiClient';
 
-export interface LiveTelemetryTick {
-  seq: number;
-  distance_m: number;
-  ref_speed_kmh: number;
-  comp_speed_kmh: number;
-  delta_s: number;
+export type { LiveTelemetryTick };
+
+/**
+ * Estado de um recurso que vem do gateway.
+ *
+ * `data` é `null` até existir um dado real. Não há valor inicial de demonstração:
+ * a interface distingue explicitamente "carregando", "sem dados" e "erro" em vez
+ * de exibir um gráfico plausível enquanto não sabe de nada.
+ */
+export interface RemoteResource<T> {
+  data: T | null;
+  loading: boolean;
+  error: ApiClientError | null;
+  source: string | null;
 }
 
+function idle<T>(): RemoteResource<T> {
+  return { data: null, loading: false, error: null, source: null };
+}
+
+export type BottomTab = 'race_control' | 'stints' | 'laps';
+export type InsightTab = 'insights' | 'speed_traps' | 'microsectors';
+
 interface TelemetryState {
-  comparison: LapComparison;
-  comparisonSource: 'api' | 'demo';
-  comparisonLoading: boolean;
-  comparisonRequestId: number;
+  // Seleção ativa
+  sessionYear: number;
+  sessionKey: number | null;
+  sessionLabel: string;
+  refDriverNumber: number | null;
+  refDriverCode: string;
+  refLapNumber: number | null;
+  compDriverNumber: number | null;
+  compDriverCode: string;
+  compLapNumber: number | null;
+
+  setSessionYear: (year: number) => void;
+  setSession: (sessionKey: number, label: string) => void;
+  setRefSelection: (driver: number, lap: number | null, code?: string) => void;
+  setCompSelection: (driver: number, lap: number | null, code?: string) => void;
+
+  /** Consulta completa, ou `null` enquanto a seleção estiver incompleta. */
+  comparisonQuery: () => ComparisonQuery | null;
+
+  // Recursos remotos
+  comparison: RemoteResource<LapComparison>;
+  circuit: RemoteResource<CircuitGeometry>;
   refreshComparison: () => Promise<void>;
+  refreshCircuit: () => Promise<void>;
 
-  // Cursor e sincronização espacial
+  // Cursor espacial compartilhado entre gráficos e mapa
   hoveredDistanceM: number | null;
-  setHoveredDistanceM: (dist: number | null) => void;
+  setHoveredDistanceM: (distance: number | null) => void;
 
-  // Seleção de pilotos e voltas
-  refDriverNumber: number;
-  refLapNumber: number;
-  compDriverNumber: number;
-  compLapNumber: number;
-  setRefSelection: (driver: number, lap: number) => void;
-  setCompSelection: (driver: number, lap: number) => void;
-
-  // Insight ativo/em foco (destaca trecho na pista e nos gráficos)
   activeInsightId: string | null;
   setActiveInsightId: (id: string | null) => void;
 
-  // Painéis colapsáveis (para máxima área analítica em telas desktop)
+  // Layout
   leftPanelOpen: boolean;
   rightPanelOpen: boolean;
   bottomPanelOpen: boolean;
@@ -42,85 +75,223 @@ interface TelemetryState {
   toggleRightPanel: () => void;
   toggleBottomPanel: () => void;
 
-  // Aba ativa do painel inferior
-  bottomTab: 'timeline' | 'race_control' | 'stints' | 'laps';
-  setBottomTab: (tab: 'timeline' | 'race_control' | 'stints' | 'laps') => void;
+  bottomTab: BottomTab;
+  setBottomTab: (tab: BottomTab) => void;
+  insightTab: InsightTab;
+  setInsightTab: (tab: InsightTab) => void;
 
-  // Live SSE stream state
+  // Replay em tempo de pista via SSE
   liveStreaming: boolean;
-  setLiveStreaming: (active: boolean) => void;
+  liveError: string | null;
   liveTick: LiveTelemetryTick | null;
-  setLiveTick: (tick: LiveTelemetryTick | null) => void;
-
-  // Replay mode state
   replayActive: boolean;
   replaySpeed: number;
+  setLiveStreaming: (active: boolean) => void;
+  setLiveError: (message: string | null) => void;
+  setLiveTick: (tick: LiveTelemetryTick | null) => void;
   toggleReplay: () => void;
   setReplaySpeed: (speed: number) => void;
 }
 
-export const useTelemetryStore = create<TelemetryState>((set) => ({
-  comparison: DEMO_LAP_COMPARISON,
-  comparisonSource: 'demo',
-  comparisonLoading: false,
-  comparisonRequestId: 0,
-  refreshComparison: async () => {
-    let requestId = 0;
-    let selection = { session: 9472, refDriver: 1, refLap: 14, compDriver: 16, compLap: 15 };
-    set((state) => {
-      requestId = state.comparisonRequestId + 1;
-      selection = {
-        session: 9472,
-        refDriver: state.refDriverNumber,
-        refLap: state.refLapNumber,
-        compDriver: state.compDriverNumber,
-        compLap: state.compLapNumber
-      };
-      return { comparisonLoading: true, comparisonRequestId: requestId };
+/** Controladores em módulo: não pertencem ao estado renderizável. */
+let comparisonController: AbortController | null = null;
+let circuitController: AbortController | null = null;
+
+export const useTelemetryStore = create<TelemetryState>((set, get) => ({
+  sessionYear: new Date().getUTCFullYear(),
+  sessionKey: null,
+  sessionLabel: '',
+  refDriverNumber: null,
+  refDriverCode: '',
+  refLapNumber: null,
+  compDriverNumber: null,
+  compDriverCode: '',
+  compLapNumber: null,
+
+  setSessionYear: (year) =>
+    set({
+      sessionYear: year,
+      sessionKey: null,
+      sessionLabel: '',
+      refDriverNumber: null,
+      refLapNumber: null,
+      compDriverNumber: null,
+      compLapNumber: null,
+      comparison: idle(),
+      circuit: idle()
+    }),
+
+  setSession: (sessionKey, label) => {
+    if (get().sessionKey === sessionKey) return;
+    // Trocar de sessão invalida pilotos, voltas e traçado: nada sobrevive à troca.
+    set({
+      sessionKey,
+      sessionLabel: label,
+      refDriverNumber: null,
+      refLapNumber: null,
+      compDriverNumber: null,
+      compLapNumber: null,
+      comparison: idle(),
+      circuit: idle(),
+      hoveredDistanceM: null,
+      activeInsightId: null
     });
-    const result = await fetchLapComparison(selection.session, selection.refDriver, selection.refLap, selection.compDriver, selection.compLap);
-    set((state) => state.comparisonRequestId === requestId ? {
-      comparison: result.data,
-      comparisonSource: result.isFromApi ? 'api' : 'demo',
-      comparisonLoading: false,
-      activeInsightId: result.data.insights[0]?.id ?? null
-    } : state);
   },
+
+  setRefSelection: (driver, lap, code) =>
+    set((state) => ({
+      refDriverNumber: driver,
+      refLapNumber: lap,
+      refDriverCode: code ?? (driver === state.refDriverNumber ? state.refDriverCode : '')
+    })),
+
+  setCompSelection: (driver, lap, code) =>
+    set((state) => ({
+      compDriverNumber: driver,
+      compLapNumber: lap,
+      compDriverCode: code ?? (driver === state.compDriverNumber ? state.compDriverCode : '')
+    })),
+
+  comparisonQuery: () => {
+    const { sessionKey, refDriverNumber, refLapNumber, compDriverNumber, compLapNumber } = get();
+    if (
+      sessionKey === null ||
+      refDriverNumber === null ||
+      refLapNumber === null ||
+      compDriverNumber === null ||
+      compLapNumber === null
+    ) {
+      return null;
+    }
+    return {
+      sessionKey,
+      refDriver: refDriverNumber,
+      refLap: refLapNumber,
+      compDriver: compDriverNumber,
+      compLap: compLapNumber,
+      stepM: 5.0
+    };
+  },
+
+  comparison: idle(),
+  circuit: idle(),
+
+  refreshComparison: async () => {
+    const query = get().comparisonQuery();
+    if (!query) {
+      set({ comparison: idle() });
+      return;
+    }
+    // Comparar uma volta com ela mesma não é uma comparação; o gateway recusaria.
+    if (query.refDriver === query.compDriver && query.refLap === query.compLap) {
+      set({ comparison: idle() });
+      return;
+    }
+
+    comparisonController?.abort();
+    const controller = new AbortController();
+    comparisonController = controller;
+
+    set((state) => ({ comparison: { ...state.comparison, loading: true, error: null } }));
+
+    try {
+      const result = await fetchLapComparison(query, controller.signal);
+      if (comparisonController !== controller) return;
+      set({
+        comparison: { data: result.data, loading: false, error: null, source: result.source },
+        activeInsightId: result.data.insights[0]?.id ?? null
+      });
+    } catch (error) {
+      if (controller.signal.aborted || comparisonController !== controller) return;
+      set({
+        comparison: {
+          data: null,
+          loading: false,
+          error:
+            error instanceof ApiClientError
+              ? error
+              : new ApiClientError(String(error), 'UNEXPECTED_ERROR', 0),
+          source: null
+        },
+        activeInsightId: null
+      });
+    } finally {
+      if (comparisonController === controller) comparisonController = null;
+    }
+  },
+
+  refreshCircuit: async () => {
+    const { sessionKey } = get();
+    if (sessionKey === null) {
+      set({ circuit: idle() });
+      return;
+    }
+
+    circuitController?.abort();
+    const controller = new AbortController();
+    circuitController = controller;
+
+    set((state) => ({ circuit: { ...state.circuit, loading: true, error: null } }));
+
+    try {
+      const result = await fetchCircuitGeometry(sessionKey, controller.signal);
+      if (circuitController !== controller) return;
+      set({ circuit: { data: result.data, loading: false, error: null, source: result.source } });
+    } catch (error) {
+      if (controller.signal.aborted || circuitController !== controller) return;
+      set({
+        circuit: {
+          data: null,
+          loading: false,
+          error:
+            error instanceof ApiClientError
+              ? error
+              : new ApiClientError(String(error), 'UNEXPECTED_ERROR', 0),
+          source: null
+        }
+      });
+    } finally {
+      if (circuitController === controller) circuitController = null;
+    }
+  },
+
   hoveredDistanceM: null,
-  setHoveredDistanceM: (dist) => set({ hoveredDistanceM: dist }),
+  setHoveredDistanceM: (distance) => set({ hoveredDistanceM: distance }),
 
-  refDriverNumber: 1,
-  refLapNumber: 14,
-  compDriverNumber: 16,
-  compLapNumber: 15,
-  setRefSelection: (driver, lap) => set({ refDriverNumber: driver, refLapNumber: lap }),
-  setCompSelection: (driver, lap) => set({ compDriverNumber: driver, compLapNumber: lap }),
-
-  activeInsightId: 'ins-t4-loss',
+  activeInsightId: null,
   setActiveInsightId: (id) => set({ activeInsightId: id }),
 
   leftPanelOpen: true,
   rightPanelOpen: true,
   bottomPanelOpen: true,
-  toggleLeftPanel: () => set((s) => ({ leftPanelOpen: !s.leftPanelOpen })),
-  toggleRightPanel: () => set((s) => ({ rightPanelOpen: !s.rightPanelOpen })),
-  toggleBottomPanel: () => set((s) => ({ bottomPanelOpen: !s.bottomPanelOpen })),
+  toggleLeftPanel: () => set((state) => ({ leftPanelOpen: !state.leftPanelOpen })),
+  toggleRightPanel: () => set((state) => ({ rightPanelOpen: !state.rightPanelOpen })),
+  toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
 
   bottomTab: 'race_control',
   setBottomTab: (tab) => set({ bottomTab: tab }),
+  insightTab: 'insights',
+  setInsightTab: (tab) => set({ insightTab: tab }),
 
-  // Live SSE stream state
   liveStreaming: false,
-  setLiveStreaming: (active) => set({ liveStreaming: active }),
+  liveError: null,
   liveTick: null,
-  setLiveTick: (tick) => set((s) => ({
-    liveTick: tick,
-    hoveredDistanceM: tick ? tick.distance_m : s.hoveredDistanceM
-  })),
-
-  // Replay mode state
   replayActive: false,
-  replaySpeed: 1,
-  toggleReplay: () => set((s) => ({ replayActive: !s.replayActive })),
-  setReplaySpeed: (speed) => set({ replaySpeed: speed })
+  replaySpeed: 4,
+
+  setLiveStreaming: (active) => set({ liveStreaming: active }),
+  setLiveError: (message) => set({ liveError: message }),
+  setLiveTick: (tick) =>
+    set((state) => ({
+      liveTick: tick,
+      // O quadro do replay comanda o cursor espacial compartilhado.
+      hoveredDistanceM: tick ? tick.distance_m : state.hoveredDistanceM
+    })),
+  toggleReplay: () =>
+    set((state) => ({
+      replayActive: !state.replayActive,
+      liveTick: state.replayActive ? null : state.liveTick,
+      liveError: null
+    })),
+  setReplaySpeed: (speed) => set({ replaySpeed: Math.min(50, Math.max(0.5, speed)) })
 }));

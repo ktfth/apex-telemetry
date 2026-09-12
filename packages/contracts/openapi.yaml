@@ -1,143 +1,341 @@
 openapi: 3.1.0
 info:
-  title: ApexTelemetry High-Precision Engineering API
-  version: 1.0.0
-  description: API REST e WebSocket para análise de telemetria de Fórmula 1 em alta precisão.
+  title: ApexTelemetry — API de telemetria de alta precisão
+  version: 2.0.0
+  description: |
+    API do `api-gateway-cpp`.
+
+    **Origem dos dados.** Toda resposta vem de uma medição real. O gateway resolve,
+    nesta ordem: (1) o armazém PostgreSQL/TimescaleDB alimentado pelo serviço de
+    ingestão; (2) a API pública OpenF1, consultada ao vivo e memorizada em cache com
+    TTL. Não existe terceira opção: quando não há dado, a resposta é um erro
+    estruturado, nunca um valor sintético. O cabeçalho `X-Apex-Data-Source` declara
+    a origem efetiva de cada payload.
+
+    **Alinhamento espacial.** As comparações são reamostradas em uma grade métrica
+    regular. O eixo de distância da volta de comparação é reescalado para o
+    comprimento medido na volta de referência, de modo que o delta acumulado no fim
+    da volta reproduza a diferença cronometrada oficial. O desvio residual é
+    publicado em `quality_audit.delta_closure_error_s` como verificação independente.
 servers:
   - url: http://localhost:8080/api/v1
-    description: API Gateway Local Drogon (C++23)
+    description: Gateway local (C++23)
+
+tags:
+  - name: Catálogo
+    description: Sessões, pilotos, voltas, stints, direção de prova e clima.
+  - name: Análise
+    description: Comparação espacial, exportação e degradação de pneus.
+  - name: Tempo real
+    description: Reprodução da volta quadro a quadro.
+
 paths:
-  /sessions:
+  /health:
     get:
-      summary: Lista sessões de telemetria disponíveis
-      parameters:
-        - name: year
-          in: query
-          schema:
-            type: integer
-            example: 2024
-        - name: circuit_key
-          in: query
-          schema:
-            type: integer
+      tags: [Catálogo]
+      summary: Estado do gateway e de suas dependências
       responses:
         '200':
-          description: Lista de sessões recuperada com sucesso
+          description: Estado operacional
           content:
             application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Session'
+              schema: { $ref: '#/components/schemas/Health' }
+
+  /sessions:
+    get:
+      tags: [Catálogo]
+      summary: Sessões disponíveis
+      parameters:
+        - { name: year, in: query, schema: { type: integer, minimum: 1950, maximum: 2200 }, example: 2024 }
+      responses:
+        '200':
+          description: Lista de sessões
+          headers:
+            X-Apex-Data-Source: { $ref: '#/components/headers/DataSource' }
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Session' } }
+        '422': { $ref: '#/components/responses/Invalid' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
 
   /sessions/{session_key}/drivers:
     get:
-      summary: Lista pilotos participantes da sessão
-      parameters:
-        - name: session_key
-          in: path
-          required: true
-          schema:
-            type: integer
+      tags: [Catálogo]
+      summary: Pilotos inscritos na sessão
+      parameters: [{ $ref: '#/components/parameters/SessionKey' }]
       responses:
         '200':
           description: Lista de pilotos
+          headers:
+            X-Apex-Data-Source: { $ref: '#/components/headers/DataSource' }
           content:
             application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Driver'
+              schema: { type: array, items: { $ref: '#/components/schemas/Driver' } }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /sessions/{session_key}/laps:
     get:
-      summary: Lista voltas da sessão, opcionalmente filtradas por piloto
+      tags: [Catálogo]
+      summary: Voltas registradas, com composto e idade de pneu cruzados dos stints reais
       parameters:
-        - name: session_key
-          in: path
-          required: true
-          schema: { type: integer }
-        - name: driver_number
-          in: query
-          required: false
-          schema: { type: integer }
+        - { $ref: '#/components/parameters/SessionKey' }
+        - { name: driver_number, in: query, schema: { type: integer, minimum: 1 } }
       responses:
         '200':
-          description: Voltas normalizadas
+          description: Lista de voltas
           headers:
-            X-Apex-Data-Source:
-              schema: { type: string }
+            X-Apex-Data-Source: { $ref: '#/components/headers/DataSource' }
           content:
             application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Lap'
+              schema: { type: array, items: { $ref: '#/components/schemas/Lap' } }
+        '404': { $ref: '#/components/responses/NotFound' }
 
-  /analysis/compare:
+  /sessions/{session_key}/stints:
     get:
-      summary: Compara duas voltas com reamostragem espacial por distância
+      tags: [Catálogo]
+      summary: Stints com composto e idade de pneu no início
       parameters:
-        - name: session_key
-          in: query
-          required: true
-          schema:
-            type: integer
-        - name: ref_driver
-          in: query
-          required: true
-          schema:
-            type: integer
-        - name: ref_lap
-          in: query
-          required: true
-          schema:
-            type: integer
-        - name: comp_driver
-          in: query
-          required: true
-          schema:
-            type: integer
-        - name: comp_lap
-          in: query
-          required: true
-          schema:
-            type: integer
-        - name: step_m
-          in: query
-          required: false
-          schema:
-            type: number
-            default: 5.0
+        - { $ref: '#/components/parameters/SessionKey' }
+        - { name: driver_number, in: query, schema: { type: integer, minimum: 1 } }
       responses:
         '200':
-          description: Comparação de telemetria alinhada por distância
+          description: Lista de stints
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/LapComparison'
+              schema: { type: array, items: { $ref: '#/components/schemas/Stint' } }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /sessions/{session_key}/race-control:
     get:
-      summary: Eventos de direção de prova e bandeiras
-      parameters:
-        - name: session_key
-          in: path
-          required: true
-          schema:
-            type: integer
+      tags: [Catálogo]
+      summary: Mensagens oficiais de direção de prova
+      parameters: [{ $ref: '#/components/parameters/SessionKey' }]
       responses:
         '200':
-          description: Eventos de corrida
+          description: Eventos da sessão
           content:
             application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RaceControlEvent'
+              schema: { type: array, items: { $ref: '#/components/schemas/RaceControlEvent' } }
+
+  /sessions/{session_key}/weather:
+    get:
+      tags: [Catálogo]
+      summary: Condições de pista medidas ao longo da sessão
+      parameters: [{ $ref: '#/components/parameters/SessionKey' }]
+      responses:
+        '200':
+          description: Leituras meteorológicas
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/WeatherSample' } }
+
+  /sessions/{session_key}/circuit:
+    get:
+      tags: [Catálogo]
+      summary: Traçado real do circuito
+      description: |
+        Reconstruído das amostras do transponder de posição da volta mais rápida da
+        sessão, com a distância de cada ponto obtida pela integração da telemetria da
+        mesma volta. Não há mapa de circuito pré-cadastrado: qualquer traçado coberto
+        pela OpenF1 é reconstruído sob demanda.
+      parameters: [{ $ref: '#/components/parameters/SessionKey' }]
+      responses:
+        '200':
+          description: Geometria do traçado e curvas detectadas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CircuitGeometry' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /analysis/compare:
+    get:
+      tags: [Análise]
+      summary: Comparação de duas voltas alinhadas por distância
+      parameters:
+        - { name: session_key, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: ref_driver, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: ref_lap, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: comp_driver, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: comp_lap, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - name: step_m
+          in: query
+          description: Passo da grade espacial, em metros.
+          schema: { type: number, minimum: 1, maximum: 50, default: 5 }
+      responses:
+        '200':
+          description: Comparação completa
+          headers:
+            X-Apex-Data-Source: { $ref: '#/components/headers/DataSource' }
+            X-Apex-Insight-Engine:
+              description: '`strategy-hs` quando o motor Haskell respondeu; `analytics-cpp` no resumo local.'
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LapComparison' }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Invalid' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /analysis/export:
+    get:
+      tags: [Análise]
+      summary: Exporta a comparação em MoTeC CSV ou JSON
+      parameters:
+        - { name: session_key, in: query, required: true, schema: { type: integer } }
+        - { name: ref_driver, in: query, required: true, schema: { type: integer } }
+        - { name: ref_lap, in: query, required: true, schema: { type: integer } }
+        - { name: comp_driver, in: query, required: true, schema: { type: integer } }
+        - { name: comp_lap, in: query, required: true, schema: { type: integer } }
+        - { name: step_m, in: query, schema: { type: number, default: 5 } }
+        - { name: format, in: query, schema: { type: string, enum: [motec_csv, json], default: motec_csv } }
+      responses:
+        '200':
+          description: Arquivo de telemetria alinhada
+          content:
+            text/csv: { schema: { type: string } }
+            application/json: { schema: { $ref: '#/components/schemas/LapComparison' } }
+        '422': { $ref: '#/components/responses/Invalid' }
+
+  /analysis/degradation:
+    get:
+      tags: [Análise]
+      summary: Degradação de pneus por stint
+      description: |
+        Regressão linear sobre os tempos reais de cada stint, com outliers de tráfego
+        descartados, avaliada pelo motor de domínio em Haskell. A perda prevista pelo
+        modelo térmico é publicada ao lado da medida, para que a diferença entre
+        medição e modelo fique visível.
+      parameters:
+        - { name: session_key, in: query, required: true, schema: { type: integer } }
+        - { name: driver_number, in: query, schema: { type: integer } }
+      responses:
+        '200':
+          description: Análise por stint
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DegradationReport' }
+        '503':
+          description: O motor de estratégia em Haskell não está configurado ou acessível
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/Error' } }
+
+  /sessions/{session_key}/live:
+    get:
+      tags: [Tempo real]
+      summary: Reprodução da volta quadro a quadro (Server-Sent Events)
+      description: |
+        Transmite a comparação já alinhada. O intervalo entre quadros é o tempo real
+        entre os pontos medidos, dividido pelo fator `speed`. Eventos emitidos:
+        `init`, `race_control`, `telemetry_tick`, `end` e `error`.
+      parameters:
+        - { $ref: '#/components/parameters/SessionKey' }
+        - { name: ref_driver, in: query, required: true, schema: { type: integer } }
+        - { name: ref_lap, in: query, required: true, schema: { type: integer } }
+        - { name: comp_driver, in: query, required: true, schema: { type: integer } }
+        - { name: comp_lap, in: query, required: true, schema: { type: integer } }
+        - { name: speed, in: query, schema: { type: number, minimum: 0.1, maximum: 50, default: 1 } }
+      responses:
+        '200':
+          description: Fluxo SSE
+          content:
+            text/event-stream:
+              schema: { type: string }
 
 components:
+  headers:
+    DataSource:
+      description: Origem verificável do payload — `postgresql` ou `openf1-upstream`.
+      schema: { type: string }
+
+  parameters:
+    SessionKey:
+      name: session_key
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+      example: 9468
+
+  responses:
+    Invalid:
+      description: Parâmetro ausente ou fora do domínio válido
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/Error' } }
+    NotFound:
+      description: O recurso não existe na origem de dados
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/Error' } }
+    RateLimited:
+      description: O upstream recusou por excesso de requisições
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/Error' } }
+    UpstreamError:
+      description: Falha ao consultar o upstream
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/Error' } }
+
   schemas:
+    Error:
+      type: object
+      required: [error, code]
+      properties:
+        error: { type: string, description: Mensagem legível por humanos }
+        code:
+          type: string
+          description: Código estável legível por máquina
+          enum:
+            - MISSING_PARAMETER
+            - INVALID_PARAMETER
+            - INVALID_SESSION_KEY
+            - INVALID_DRIVER_NUMBER
+            - INVALID_GRID_STEP
+            - INVALID_YEAR
+            - INVALID_FORMAT
+            - IDENTICAL_LAPS
+            - SESSION_NOT_FOUND
+            - SESSIONS_NOT_FOUND
+            - DRIVER_NOT_FOUND
+            - LAP_NOT_FOUND
+            - LAPS_NOT_FOUND
+            - LAP_NOT_TIMED
+            - TELEMETRY_UNAVAILABLE
+            - TRACK_GEOMETRY_UNAVAILABLE
+            - ALIGNMENT_FAILED
+            - UPSTREAM_RATE_LIMITED
+            - UPSTREAM_ERROR
+            - NO_DATA_SOURCE
+            - STRATEGY_ENGINE_UNAVAILABLE
+            - STRATEGY_ENGINE_ERROR
+            - INTERNAL_ERROR
+
+    Health:
+      type: object
+      properties:
+        status: { type: string }
+        service: { type: string }
+        version: { type: string }
+        analytics_engine: { type: string }
+        cpp_standard: { type: integer }
+        database:
+          type: object
+          properties:
+            configured: { type: boolean }
+            healthy: { type: boolean }
+        upstream:
+          type: object
+          properties:
+            provider: { type: string }
+            base_url: { type: string }
+        strategy_engine:
+          type: object
+          properties:
+            configured: { type: boolean }
+            healthy: { type: boolean }
+        cache_entries: { type: integer }
+        uptime_seconds: { type: integer }
+
     Session:
       type: object
       required: [session_key, session_name, session_type, circuit_key, circuit_name, country_name, date_start, year]
@@ -160,33 +358,291 @@ components:
         full_name: { type: string }
         name_acronym: { type: string }
         team_name: { type: string }
-        team_colour: { type: string }
+        team_colour: { type: string, pattern: '^#[0-9a-fA-F]{6}$' }
 
     Lap:
       type: object
-      required: [lap_number, lap_time_s, is_valid, lap_kind, compound, stint_number, coverage_pct]
+      required: [driver_number, lap_number, lap_time_s, is_valid, lap_kind, compound]
       properties:
+        driver_number: { type: integer }
         lap_number: { type: integer }
-        lap_time_s: { type: number }
+        lap_time_s:
+          type: [number, 'null']
+          description: '`null` quando a volta não foi cronometrada — nunca zero.'
         is_valid: { type: boolean }
         lap_kind: { type: string, enum: [FLYING, OUT_LAP, IN_LAP, INVALID, SAFETY_CAR] }
-        compound: { type: string, enum: [SOFT, MEDIUM, HARD, INTERMEDIATE, WET, UNKNOWN] }
+        compound: { $ref: '#/components/schemas/TyreCompound' }
         stint_number: { type: integer }
-        sector_1_s: { type: number }
-        sector_2_s: { type: number }
-        sector_3_s: { type: number }
-        coverage_pct: { type: number }
+        tyre_age_laps: { type: integer }
+        sector_1_s: { type: [number, 'null'] }
+        sector_2_s: { type: [number, 'null'] }
+        sector_3_s: { type: [number, 'null'] }
+        i1_speed_kmh: { type: [number, 'null'] }
+        i2_speed_kmh: { type: [number, 'null'] }
+        st_speed_kmh: { type: [number, 'null'] }
+        coverage_pct:
+          type: [number, 'null']
+          description: '`null` enquanto a telemetria da volta não tiver sido medida.'
+
+    Stint:
+      type: object
+      properties:
+        driver_number: { type: integer }
+        stint_number: { type: integer }
+        lap_start: { type: integer }
+        lap_end: { type: integer }
+        compound: { $ref: '#/components/schemas/TyreCompound' }
+        tyre_age_at_start: { type: integer }
+
+    TyreCompound:
+      type: string
+      enum: [SOFT, MEDIUM, HARD, INTERMEDIATE, WET, UNKNOWN]
 
     RaceControlEvent:
       type: object
-      required: [occurred_at, category, flag, message]
       properties:
         occurred_at: { type: string, format: date-time }
         category: { type: string }
         flag: { type: string }
+        scope: { type: string }
         message: { type: string }
-        sector: { type: integer, nullable: true }
-        driver_number: { type: integer, nullable: true }
+        sector: { type: [integer, 'null'] }
+        driver_number: { type: [integer, 'null'] }
+        lap_number: { type: [integer, 'null'] }
+
+    WeatherSample:
+      type: object
+      properties:
+        occurred_at: { type: string, format: date-time }
+        air_temperature_c: { type: number }
+        track_temperature_c: { type: number }
+        humidity_pct: { type: number }
+        pressure_mbar: { type: number }
+        wind_speed_ms: { type: number }
+        wind_direction_deg: { type: integer }
+        rainfall: { type: integer }
+
+    Corner:
+      type: object
+      description: |
+        Zona lenta detectada como mínimo local de velocidade. O rótulo `C1..Cn` é a
+        ordem de aparição na volta, não a numeração oficial do circuito.
+      properties:
+        index: { type: integer }
+        label: { type: string, example: C1 }
+        entry_distance_m: { type: number }
+        apex_distance_m: { type: number }
+        exit_distance_m: { type: number }
+        apex_speed_kmh: { type: number }
+
+    CircuitGeometry:
+      type: object
+      properties:
+        session_key: { type: integer }
+        circuit_key: { type: integer }
+        circuit_name: { type: string }
+        country_name: { type: string }
+        reference_driver_number: { type: integer }
+        reference_lap_number: { type: integer }
+        reference_lap_time_s: { type: number }
+        total_distance_m: { type: number }
+        data_source: { type: string }
+        path:
+          type: array
+          description: 'Cada ponto é `[distância_m, x, y]` nas unidades do transponder.'
+          items:
+            type: array
+            minItems: 3
+            maxItems: 3
+            items: { type: number }
+        corners:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Corner'
+              - type: object
+                properties:
+                  x: { type: number }
+                  y: { type: number }
+
+    ChannelData:
+      type: object
+      properties:
+        time_s: { type: number }
+        speed_kmh: { type: number }
+        throttle_pct: { type: number, minimum: 0, maximum: 100 }
+        brake_pct: { type: number, minimum: 0, maximum: 100 }
+        rpm: { type: integer }
+        gear: { type: integer }
+        drs: { type: boolean }
+
+    AlignedChannelPoint:
+      type: object
+      properties:
+        distance_m: { type: number }
+        delta_time_s:
+          type: number
+          description: 'tempo_comp − tempo_ref; positivo significa a comparação mais lenta.'
+        ref: { $ref: '#/components/schemas/ChannelData' }
+        comp: { $ref: '#/components/schemas/ChannelData' }
+
+    LapSummaryHeader:
+      type: object
+      properties:
+        driver_number: { type: integer }
+        driver_code: { type: string }
+        team_name: { type: string }
+        team_colour: { type: string }
+        lap_number: { type: integer }
+        lap_time_s: { type: number }
+        compound: { $ref: '#/components/schemas/TyreCompound' }
+        stint_number: { type: integer }
+        stint_lap: { type: integer }
+        tyre_age_laps: { type: integer }
+        coverage_pct: { type: number }
+        samples_count: { type: integer }
+        sector_1_s: { type: [number, 'null'] }
+        sector_2_s: { type: [number, 'null'] }
+        sector_3_s: { type: [number, 'null'] }
+
+    SpeedTrap:
+      type: object
+      properties:
+        name: { type: string }
+        distance_m: { type: number }
+        ref_speed_kmh: { type: number }
+        comp_speed_kmh: { type: number }
+        delta_kmh: { type: number }
+        origin:
+          type: string
+          enum: [openf1_marshalling_loop, channel_peak]
+          description: Sensor oficial de passagem ou pico medido no canal de velocidade.
+
+    Microsector:
+      type: object
+      properties:
+        index: { type: integer }
+        distance_start_m: { type: number }
+        distance_end_m: { type: number }
+        delta_s: { type: number }
+        ref_avg_speed_kmh: { type: number }
+        comp_avg_speed_kmh: { type: number }
+        winner: { type: string, enum: [REF, COMP, EQUAL] }
+
+    Insight:
+      type: object
+      properties:
+        id: { type: string }
+        driver_code: { type: string }
+        distance_start_m: { type: number }
+        distance_end_m: { type: number }
+        time_loss_s: { type: number }
+        summary: { type: string }
+        evidence:
+          type: object
+          properties:
+            min_speed_ref_kmh: { type: number }
+            min_speed_comp_kmh: { type: number }
+            max_speed_ref_kmh: { type: number }
+            max_speed_comp_kmh: { type: number }
+            full_throttle_distance_ref_m: { type: number }
+            full_throttle_distance_comp_m: { type: number }
+            braking_point_ref_m: { type: number }
+            braking_point_comp_m: { type: number }
+            braking_point_diff_m: { type: number }
+            apex_distance_m: { type: number }
+            is_corner: { type: boolean }
+            corner: { type: string }
+            cause:
+              type: string
+              enum: [APEX_SPEED, THROTTLE_APPLICATION, BRAKING_POINT, TOP_SPEED, MIXED]
+        assumptions: { type: array, items: { type: string } }
+        limitations: { type: array, items: { type: string } }
+        engine: { type: string, enum: [strategy-hs, analytics-cpp] }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+
+    QualityAudit:
+      type: object
+      properties:
+        max_interpolation_gap_m: { type: number }
+        discontinuous_segments: { type: integer }
+        coverage_pct: { type: number }
+        confidence_score: { type: number, minimum: 0, maximum: 1 }
+        median_sample_interval_s: { type: number }
+        raw_samples_ref: { type: integer }
+        raw_samples_comp: { type: integer }
+        delta_closure_error_s:
+          type: number
+          description: |
+            |delta acumulado no fim da volta − diferença cronometrada oficial|.
+            Verificação independente do alinhamento espacial.
+        source_notes: { type: string }
 
     LapComparison:
-      $ref: './schemas/lap-comparison.json'
+      type: object
+      required: [schema_version, session_key, channels, quality_audit]
+      properties:
+        schema_version: { type: string, const: '1.2.0' }
+        session_key: { type: integer }
+        circuit_key: { type: integer }
+        circuit_name: { type: string }
+        country_name: { type: string }
+        session_name: { type: string }
+        data_source: { type: string }
+        grid_step_m: { type: number }
+        total_distance_m: { type: number }
+        track_temperature_c: { type: [number, 'null'] }
+        air_temperature_c: { type: [number, 'null'] }
+        reference_lap: { $ref: '#/components/schemas/LapSummaryHeader' }
+        comparison_lap: { $ref: '#/components/schemas/LapSummaryHeader' }
+        corners: { type: array, items: { $ref: '#/components/schemas/Corner' } }
+        speed_traps: { type: array, items: { $ref: '#/components/schemas/SpeedTrap' } }
+        microsectors: { type: array, items: { $ref: '#/components/schemas/Microsector' } }
+        channels: { type: array, items: { $ref: '#/components/schemas/AlignedChannelPoint' } }
+        insights: { type: array, items: { $ref: '#/components/schemas/Insight' } }
+        quality_audit: { $ref: '#/components/schemas/QualityAudit' }
+
+    StrategyRecommendation:
+      type: object
+      properties:
+        target_lap: { type: integer }
+        next_compound: { $ref: '#/components/schemas/TyreCompound' }
+        projected_gain_s: { type: number }
+        rationale: { type: string }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+
+    StintAnalysis:
+      type: object
+      properties:
+        driver_number: { type: integer }
+        stint_number: { type: integer }
+        compound: { $ref: '#/components/schemas/TyreCompound' }
+        lap_start: { type: integer }
+        lap_end: { type: integer }
+        lap_count: { type: integer }
+        representative_laps:
+          type: integer
+          description: Voltas que sobreviveram ao filtro de outliers e alimentaram a regressão.
+        avg_lap_time_s: { type: number }
+        best_lap_time_s: { type: number }
+        observed_degradation_s_per_lap:
+          type: number
+          description: Inclinação medida na regressão dos tempos reais.
+        predicted_pace_loss_s:
+          type: number
+          description: Perda acumulada prevista pelo modelo térmico, para contraste.
+        cliff_lap: { type: integer }
+        in_cliff: { type: boolean }
+        recommendation:
+          oneOf:
+            - $ref: '#/components/schemas/StrategyRecommendation'
+            - type: 'null'
+        notes: { type: array, items: { type: string } }
+
+    DegradationReport:
+      type: object
+      properties:
+        session_key: { type: integer }
+        engine: { type: string }
+        track_temperature_c: { type: number }
+        stints: { type: array, items: { $ref: '#/components/schemas/StintAnalysis' } }

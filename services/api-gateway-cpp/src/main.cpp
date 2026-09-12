@@ -1,380 +1,763 @@
-#include "http_server.hpp"
 #include "database_repository.hpp"
+#include "http_server.hpp"
 #include "metrics_collector.hpp"
 #include "spatial_alignment.hpp"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <csignal>
-#include <cmath>
+#include "strategy_client.hpp"
+#include "telemetry_resolver.hpp"
+
+#include "../../common/http/http_client.hpp"
+#include "../../common/openf1/openf1_client.hpp"
+#include "../../common/simdjson/simdjson.h"
+
+#include <algorithm>
 #include <charconv>
 #include <chrono>
-#include <optional>
+#include <cmath>
+#include <csignal>
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
 #include <memory>
-
-static apex::gateway::HttpServer* g_server = nullptr;
+#include <optional>
+#include <sstream>
+#include <thread>
 
 namespace {
+
+using apex::analytics::SpatialAlignmentEngine;
+using apex::gateway::HttpRequest;
+using apex::gateway::HttpResponse;
+using apex::gateway::MetricsCollector;
+using apex::gateway::ResolveError;
+using apex::gateway::TelemetryResolver;
+
+apex::gateway::HttpServer* g_server = nullptr;
+
+void signal_handler(int) {
+    std::cout << "\n[INFO] Encerrando o gateway...\n";
+    if (g_server) g_server->stop();
+}
+
 std::optional<int64_t> parse_positive_integer(const std::string& value) {
     int64_t result{};
-    const auto [ptr, ec] = std::from_chars(value.data(), value.data() + value.size(), result);
-    if (ec != std::errc{} || ptr != value.data() + value.size() || result <= 0) return std::nullopt;
+    const auto* end = value.data() + value.size();
+    const auto [pointer, code] = std::from_chars(value.data(), end, result);
+    if (code != std::errc{} || pointer != end || result <= 0) return std::nullopt;
     return result;
 }
 
-apex::gateway::HttpResponse api_error(int status, const std::string& code, const std::string& message) {
-    return {status, "application/json", "{\"error\":\"" + message + "\",\"code\":\"" + code + "\"}", {}};
+std::optional<std::string> query_value(const HttpRequest& request, const std::string& key) {
+    const auto it = request.query_params.find(key);
+    if (it == request.query_params.end() || it->second.empty()) return std::nullopt;
+    return it->second;
 }
 
-apex::gateway::HttpResponse data_response(std::string body, const std::string& source) {
+HttpResponse api_error(int status, const std::string& code, const std::string& message) {
+    std::ostringstream body;
+    body << "{\"error\":\"" << SpatialAlignmentEngine::json_escape(message) << "\",\"code\":\""
+         << SpatialAlignmentEngine::json_escape(code) << "\"}";
+    return {status, "application/json", body.str(), {}};
+}
+
+HttpResponse api_error(const ResolveError& error) {
+    return api_error(error.status, error.code, error.message);
+}
+
+HttpResponse data_response(std::string body, const std::string& source) {
+    MetricsCollector::instance().record_source(source);
     return {200, "application/json", std::move(body), {{"X-Apex-Data-Source", source}}};
 }
+
+/** Envolve um handler com o cronômetro de métricas, para que /metrics reflita o tráfego real. */
+apex::gateway::HttpHandler instrumented(std::string route, apex::gateway::HttpHandler handler) {
+    return [route = std::move(route), handler = std::move(handler)](const HttpRequest& request) {
+        MetricsCollector::ScopedTimer timer(MetricsCollector::instance(), route);
+        auto response = handler(request);
+        timer.set_status(response.status_code);
+        return response;
+    };
 }
 
-void signal_handler(int sig) {
-    (void)sig;
-    std::cout << "\n[INFO] Graceful shutdown initiated...\n";
-    if (g_server) {
-        g_server->stop();
+/** Lê um campo opcional de um documento simdjson, mantendo o padrão quando ausente. */
+template <typename T>
+T dom_field(const simdjson::dom::element& element, std::string_view key, T fallback) {
+    T value{};
+    if (element[key].get(value) != simdjson::SUCCESS) return fallback;
+    return value;
+}
+
+std::string format_number(double value, int precision) {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(precision) << value;
+    return oss.str();
+}
+
+/** Resultado completo de uma comparação, reutilizado por compare, export e live. */
+struct ComparisonResult {
+    apex::analytics::SessionMetadata session;
+    apex::analytics::LapMetadata ref_lap;
+    apex::analytics::LapMetadata comp_lap;
+    std::vector<apex::analytics::ComparisonChannelPoint> channels;
+    std::vector<apex::analytics::Corner> corners;
+    std::vector<apex::analytics::SpeedTrap> speed_traps;
+    std::vector<apex::analytics::Microsector> microsectors;
+    std::vector<apex::analytics::TelemetrySegment> segments;
+    apex::analytics::QualityMetrics quality;
+    double grid_step_m{5.0};
+    std::string insights_engine{"analytics-cpp"};
+    std::string insights_json;
+};
+
+/**
+ * Pipeline de análise: telemetria medida → distância integrada → grade métrica →
+ * delta → curvas, microsetores, speed traps e segmentos de perda. A explicação em
+ * linguagem natural vem do motor Haskell; sem ele, do resumo determinístico em C++.
+ */
+std::optional<ComparisonResult> run_comparison(TelemetryResolver& resolver,
+                                               apex::gateway::StrategyClient& strategy,
+                                               int64_t session_key, int32_t ref_driver,
+                                               int32_t ref_lap_number, int32_t comp_driver,
+                                               int32_t comp_lap_number, double grid_step_m,
+                                               ResolveError& error) {
+    ComparisonResult result;
+    result.grid_step_m = grid_step_m;
+
+    const auto session = resolver.session_metadata(session_key, error);
+    if (!session) return std::nullopt;
+    result.session = *session;
+
+    const auto reference = resolver.lap_telemetry(session_key, ref_driver, ref_lap_number, error);
+    if (!reference) return std::nullopt;
+    const auto comparison = resolver.lap_telemetry(session_key, comp_driver, comp_lap_number, error);
+    if (!comparison) return std::nullopt;
+
+    result.ref_lap = reference->metadata;
+    result.comp_lap = comparison->metadata;
+
+    auto ref_distance = SpatialAlignmentEngine::integrate_distance(reference->samples);
+    auto comp_distance = SpatialAlignmentEngine::integrate_distance(comparison->samples);
+
+    // A volta de referência define o eixo espacial: o comprimento que ela mediu
+    // vira a régua para as duas voltas. Sem isso, o erro de escala da integração
+    // a 4 Hz difere entre pilotos e o delta acumulado não fecha com o cronômetro.
+    ref_distance = SpatialAlignmentEngine::normalize_lap_distance(
+        std::move(ref_distance), result.ref_lap.lap_time_s, 0.0); // fecha as pontas, sem reescalar
+    const double axis_length_m = ref_distance.empty() ? 0.0 : ref_distance.back().distance_m;
+    comp_distance = SpatialAlignmentEngine::normalize_lap_distance(
+        std::move(comp_distance), result.comp_lap.lap_time_s, axis_length_m);
+
+    const double max_gap_m =
+        std::max(SpatialAlignmentEngine::recommended_max_gap_m(ref_distance, grid_step_m),
+                 SpatialAlignmentEngine::recommended_max_gap_m(comp_distance, grid_step_m));
+    const auto ref_grid = SpatialAlignmentEngine::resample_to_grid(ref_distance, grid_step_m, max_gap_m);
+    const auto comp_grid = SpatialAlignmentEngine::resample_to_grid(comp_distance, grid_step_m, max_gap_m);
+
+    result.channels = SpatialAlignmentEngine::align_and_compute_delta(ref_grid, comp_grid);
+    if (result.channels.size() < 20) {
+        error = {422, "ALIGNMENT_FAILED",
+                 "The two laps produced only " + std::to_string(result.channels.size()) +
+                     " aligned grid points; the telemetry coverage is too sparse to compare"};
+        return std::nullopt;
     }
-}
 
-std::string read_file_or_default(const std::string& path, const std::string& fallback) {
-    std::ifstream ifs(path);
-    if (!ifs) return fallback;
-    std::stringstream ss;
-    ss << ifs.rdbuf();
-    return ss.str();
-}
+    result.corners = SpatialAlignmentEngine::detect_corners(ref_grid);
+    result.microsectors = SpatialAlignmentEngine::compute_microsectors(result.channels, 100.0);
+    result.speed_traps =
+        SpatialAlignmentEngine::compute_speed_traps(result.channels, result.ref_lap, result.comp_lap);
+    result.segments = SpatialAlignmentEngine::detect_segments(result.channels, result.corners);
+    result.quality = SpatialAlignmentEngine::compute_quality_audit(ref_distance, comp_distance,
+                                                                   ref_grid, comp_grid, max_gap_m);
 
-std::string generate_live_comparison(int64_t session_key, int32_t ref_driver, int32_t ref_lap, int32_t comp_driver, int32_t comp_lap, double step_m) {
-    // Gera amostras da volta com perfil cinemático de Sakhir
-    const double total_dist = 5412.0;
-    std::vector<apex::analytics::RawSample> raw_ref;
-    std::vector<apex::analytics::RawSample> raw_comp;
+    // Verificação independente: o delta acumulado no fim da volta deve reproduzir a
+    // diferença cronometrada oficial. O desvio é publicado para auditoria.
+    result.quality.delta_closure_error_s =
+        std::abs(result.channels.back().delta_time_s -
+                 (result.comp_lap.lap_time_s - result.ref_lap.lap_time_s));
 
-    double t_ref = 0.0;
-    double t_comp = 0.0;
-    double d = 0.0;
+    // A origem real dos dois conjuntos de amostras é declarada no payload.
+    result.session.data_source = reference->source == comparison->source
+                                     ? reference->source
+                                     : reference->source + "+" + comparison->source;
 
-    while (d <= total_dist) {
-        // Velocidades modeladas com frenagens em T1 (700m), T4 (1550m), T8 (2750m), T10 (3350m)
-        double v_ref = 315.0;
-        double v_comp = 313.0;
-        double thr_ref = 100.0;
-        double thr_comp = 100.0;
-        double brk_ref = 0.0;
-        double brk_comp = 0.0;
-        int gear = 8;
-        bool drs = (d >= 100 && d <= 580) || (d >= 1750 && d <= 1900) || (d >= 4650 && d <= 5050);
-
-        if (d >= 650 && d <= 850) { // T1-T2
-            v_ref = 68.0; v_comp = 66.0;
-            brk_ref = (d < 730) ? 95.0 : 0.0;
-            brk_comp = (d < 730) ? 92.0 : 0.0;
-            thr_ref = (d >= 730) ? 90.0 : 0.0;
-            thr_comp = (d >= 730) ? 85.0 : 0.0;
-            gear = 2;
-        } else if (d >= 1420 && d <= 1750) { // T4 (foco do insight)
-            v_ref = 118.2; v_comp = 111.4;
-            brk_ref = (d < 1550) ? 90.0 : 0.0;
-            brk_comp = (d < 1550) ? 88.0 : 0.0;
-            thr_ref = (d >= 1550) ? 98.0 : 0.0;
-            // Leclerc 31m mais tarde na aceleração plena
-            thr_comp = (d >= 1581) ? 95.0 : ((d >= 1550) ? 50.0 : 0.0);
-            gear = 4;
+    const auto evidence = SpatialAlignmentEngine::build_evidence_json(result.session, result.ref_lap,
+                                                                      result.comp_lap, result.segments);
+    if (strategy.configured()) {
+        const auto insights = strategy.insights(evidence);
+        MetricsCollector::instance().record_strategy(insights.has_value());
+        if (insights) {
+            result.insights_json = *insights;
+            result.insights_engine = "strategy-hs";
+        } else {
+            std::cerr << "[WARN] motor de estratégia indisponível: " << strategy.last_error() << "\n";
         }
-
-        raw_ref.push_back({ t_ref, v_ref, thr_ref, brk_ref, 11000, gear, drs });
-        raw_comp.push_back({ t_comp, v_comp, thr_comp, brk_comp, 10800, gear, drs });
-
-        double dt_ref = (step_m / (v_ref / 3.6));
-        double dt_comp = (step_m / (v_comp / 3.6));
-        t_ref += dt_ref;
-        t_comp += dt_comp;
-        d += step_m;
+    }
+    if (result.insights_json.empty()) {
+        result.insights_json = SpatialAlignmentEngine::build_insights_json(
+            result.comp_lap, result.segments, result.quality, grid_step_m);
     }
 
-    auto dist_ref = apex::analytics::SpatialAlignmentEngine::integrate_distance(raw_ref);
-    auto dist_comp = apex::analytics::SpatialAlignmentEngine::integrate_distance(raw_comp);
-
-    auto grid_ref = apex::analytics::SpatialAlignmentEngine::resample_to_grid(dist_ref, step_m, 25.0);
-    auto grid_comp = apex::analytics::SpatialAlignmentEngine::resample_to_grid(dist_comp, step_m, 25.0);
-
-    auto channels = apex::analytics::SpatialAlignmentEngine::align_and_compute_delta(grid_ref, grid_comp);
-    auto segs = apex::analytics::SpatialAlignmentEngine::detect_segments(channels);
-    auto quality = apex::analytics::SpatialAlignmentEngine::compute_quality_audit(dist_ref, 25.0);
-
-    return apex::analytics::SpatialAlignmentEngine::build_comparison_json(
-        session_key, ref_driver, ref_lap, comp_driver, comp_lap, step_m, total_dist, channels, segs, quality
-    );
+    return result;
 }
 
-std::string generate_live_motec_csv(int32_t ref_driver, int32_t comp_driver, double step_m) {
-    const double total_dist = 5412.0;
-    std::vector<apex::analytics::RawSample> raw_ref;
-    std::vector<apex::analytics::RawSample> raw_comp;
-    double t_ref = 0.0, t_comp = 0.0, d = 0.0;
+/** Parâmetros comuns aos endpoints de análise. */
+struct ComparisonQuery {
+    int64_t session_key{0};
+    int32_t ref_driver{0};
+    int32_t ref_lap{0};
+    int32_t comp_driver{0};
+    int32_t comp_lap{0};
+    double step_m{5.0};
+};
 
-    while (d <= total_dist) {
-        double v_ref = 315.0, v_comp = 313.0;
-        double thr_ref = 100.0, thr_comp = 100.0;
-        double brk_ref = 0.0, brk_comp = 0.0;
-        int gear = 8;
-        bool drs = (d >= 100 && d <= 580) || (d >= 1750 && d <= 1900) || (d >= 4650 && d <= 5050);
-
-        if (d >= 650 && d <= 850) {
-            v_ref = 68.0; v_comp = 66.0;
-            brk_ref = (d < 730) ? 95.0 : 0.0;
-            brk_comp = (d < 730) ? 92.0 : 0.0;
-            thr_ref = (d >= 730) ? 90.0 : 0.0;
-            thr_comp = (d >= 730) ? 85.0 : 0.0;
-            gear = 2;
-        } else if (d >= 1420 && d <= 1750) {
-            v_ref = 118.2; v_comp = 111.4;
-            brk_ref = (d < 1550) ? 90.0 : 0.0;
-            brk_comp = (d < 1550) ? 88.0 : 0.0;
-            thr_ref = (d >= 1550) ? 98.0 : 0.0;
-            thr_comp = (d >= 1581) ? 95.0 : ((d >= 1550) ? 50.0 : 0.0);
-            gear = 4;
+std::optional<ComparisonQuery> parse_comparison_query(const HttpRequest& request,
+                                                      HttpResponse& failure) {
+    ComparisonQuery query;
+    static constexpr const char* required[] = {"session_key", "ref_driver", "ref_lap", "comp_driver",
+                                               "comp_lap"};
+    for (const auto* name : required) {
+        if (!query_value(request, name)) {
+            failure = api_error(400, "MISSING_PARAMETER",
+                                std::string("Missing query parameter: ") + name);
+            return std::nullopt;
         }
-
-        raw_ref.push_back({ t_ref, v_ref, thr_ref, brk_ref, 11000, gear, drs });
-        raw_comp.push_back({ t_comp, v_comp, thr_comp, brk_comp, 10800, gear, drs });
-
-        double dt_ref = (step_m / (v_ref / 3.6));
-        double dt_comp = (step_m / (v_comp / 3.6));
-        t_ref += dt_ref;
-        t_comp += dt_comp;
-        d += step_m;
     }
 
-    auto dist_ref = apex::analytics::SpatialAlignmentEngine::integrate_distance(raw_ref);
-    auto dist_comp = apex::analytics::SpatialAlignmentEngine::integrate_distance(raw_comp);
-    auto grid_ref = apex::analytics::SpatialAlignmentEngine::resample_to_grid(dist_ref, step_m, 25.0);
-    auto grid_comp = apex::analytics::SpatialAlignmentEngine::resample_to_grid(dist_comp, step_m, 25.0);
-    auto channels = apex::analytics::SpatialAlignmentEngine::align_and_compute_delta(grid_ref, grid_comp);
+    const auto session = parse_positive_integer(*query_value(request, "session_key"));
+    const auto ref_driver = parse_positive_integer(*query_value(request, "ref_driver"));
+    const auto ref_lap = parse_positive_integer(*query_value(request, "ref_lap"));
+    const auto comp_driver = parse_positive_integer(*query_value(request, "comp_driver"));
+    const auto comp_lap = parse_positive_integer(*query_value(request, "comp_lap"));
+    if (!session || !ref_driver || !ref_lap || !comp_driver || !comp_lap) {
+        failure = api_error(422, "INVALID_PARAMETER",
+                            "Session key, driver numbers and lap numbers must be positive integers");
+        return std::nullopt;
+    }
+    if (*ref_driver == *comp_driver && *ref_lap == *comp_lap) {
+        failure = api_error(422, "IDENTICAL_LAPS", "Reference and comparison laps must differ");
+        return std::nullopt;
+    }
 
-    return apex::analytics::SpatialAlignmentEngine::export_motec_csv(
-        "Bahrain GP 2024 Qualifying Q3", ref_driver, comp_driver, channels
-    );
+    query.session_key = *session;
+    query.ref_driver = static_cast<int32_t>(*ref_driver);
+    query.ref_lap = static_cast<int32_t>(*ref_lap);
+    query.comp_driver = static_cast<int32_t>(*comp_driver);
+    query.comp_lap = static_cast<int32_t>(*comp_lap);
+
+    if (const auto step = query_value(request, "step_m")) {
+        try {
+            size_t consumed = 0;
+            query.step_m = std::stod(*step, &consumed);
+            if (consumed != step->size() || !std::isfinite(query.step_m) || query.step_m < 1.0 ||
+                query.step_m > 50.0) {
+                failure = api_error(422, "INVALID_GRID_STEP", "step_m must be between 1 and 50 metres");
+                return std::nullopt;
+            }
+        } catch (...) {
+            failure = api_error(422, "INVALID_GRID_STEP", "step_m must be a finite number");
+            return std::nullopt;
+        }
+    }
+
+    return query;
 }
+
+/** Monta o corpo do pedido de degradação a partir de voltas e stints reais. */
+std::string build_degradation_request(TelemetryResolver& resolver, int64_t session_key,
+                                      std::optional<int32_t> driver_number,
+                                      const apex::analytics::SessionMetadata& session,
+                                      ResolveError& error) {
+    const auto stints_payload = resolver.stints(session_key, driver_number, error);
+    if (!stints_payload) return {};
+    const auto laps_payload = resolver.laps(session_key, driver_number, error);
+    if (!laps_payload) return {};
+
+    // Cruza stints e voltas com simdjson para evitar uma segunda ida à origem.
+    simdjson::dom::parser parser;
+    simdjson::dom::element stints_doc;
+    simdjson::dom::element laps_doc;
+    if (parser.parse(stints_payload->json).get(stints_doc) != simdjson::SUCCESS) {
+        error = {500, "INTERNAL_ERROR", "Could not parse the resolved stint payload"};
+        return {};
+    }
+    simdjson::dom::parser laps_parser;
+    if (laps_parser.parse(laps_payload->json).get(laps_doc) != simdjson::SUCCESS) {
+        error = {500, "INTERNAL_ERROR", "Could not parse the resolved lap payload"};
+        return {};
+    }
+
+    struct LapFact {
+        int64_t driver;
+        int64_t number;
+        double time_s;
+        bool valid;
+    };
+    std::vector<LapFact> laps;
+    for (auto lap : laps_doc.get_array()) {
+        double time_s = 0.0;
+        if (lap["lap_time_s"].get_double().get(time_s) != simdjson::SUCCESS || time_s <= 0.0) continue;
+        int64_t driver = 0;
+        int64_t number = 0;
+        if (lap["driver_number"].get_int64().get(driver) != simdjson::SUCCESS) continue;
+        if (lap["lap_number"].get_int64().get(number) != simdjson::SUCCESS) continue;
+        laps.push_back({driver, number, time_s, dom_field<bool>(lap, "is_valid", true)});
+    }
+
+    std::ostringstream oss;
+    oss << '{';
+    if (session.track_temperature_c) {
+        oss << "\"track_temperature_c\":" << format_number(*session.track_temperature_c, 1) << ',';
+    }
+    // O horizonte da sessão é o maior número de volta efetivamente registrado.
+    int64_t total_laps = 0;
+    for (const auto& lap : laps) total_laps = std::max(total_laps, lap.number);
+    oss << "\"total_session_laps\":" << total_laps << ",\"stints\":[";
+
+    bool first_stint = true;
+    for (auto stint : stints_doc.get_array()) {
+        int64_t driver = 0;
+        if (stint["driver_number"].get_int64().get(driver) != simdjson::SUCCESS) continue;
+        const auto stint_number = dom_field<int64_t>(stint, "stint_number", 0);
+        const auto lap_start = dom_field<int64_t>(stint, "lap_start", 0);
+        const auto lap_end = dom_field<int64_t>(stint, "lap_end", 0);
+        const auto age_at_start = dom_field<int64_t>(stint, "tyre_age_at_start", 0);
+        const auto compound = dom_field<std::string_view>(stint, "compound", "UNKNOWN");
+
+        if (!first_stint) oss << ',';
+        first_stint = false;
+        oss << "{\"driver_number\":" << driver << ",\"stint_number\":" << stint_number
+            << ",\"compound\":\"" << SpatialAlignmentEngine::json_escape(std::string(compound))
+            << "\",\"tyre_age_at_start\":" << age_at_start << ",\"laps\":[";
+
+        bool first_lap = true;
+        for (const auto& lap : laps) {
+            if (lap.driver != driver || lap.number < lap_start || lap.number > lap_end) continue;
+            if (!first_lap) oss << ',';
+            first_lap = false;
+            oss << "{\"lap_number\":" << lap.number
+                << ",\"lap_time_s\":" << format_number(lap.time_s, 3)
+                << ",\"tyre_age_laps\":" << (age_at_start + (lap.number - lap_start))
+                << ",\"is_valid\":" << (lap.valid ? "true" : "false") << '}';
+        }
+        oss << "]}";
+    }
+    oss << "]}";
+    return oss.str();
+}
+
+} // namespace
 
 int main(int argc, char* argv[]) {
     int port = 8080;
     if (argc > 1) {
-        port = std::stoi(argv[1]);
+        try {
+            port = std::stoi(argv[1]);
+        } catch (...) {
+            std::cerr << "[ERRO] Porta inválida: " << argv[1] << "\n";
+            return 2;
+        }
     }
 
+    auto database = std::make_shared<apex::gateway::DatabaseRepository>();
+    auto http_client = std::make_shared<apex::common::HttpClient>();
+    auto upstream = std::make_shared<apex::openf1::Client>(http_client);
+    auto resolver = std::make_shared<TelemetryResolver>(database, upstream);
+    apex::gateway::StrategyClient strategy;
+
+    // Todo tráfego real ao upstream é contabilizado, inclusive as recusas.
+    upstream->set_request_observer([](std::string_view, int, bool success) {
+        MetricsCollector::instance().record_upstream(success);
+    });
+
+    auto& metrics = MetricsCollector::instance();
+    const auto start_time = std::chrono::steady_clock::now();
+
     std::cout << "====================================================\n"
-              << " ApexTelemetry — High-Speed API Gateway (C++23)     \n"
-              << "====================================================\n";
+              << " ApexTelemetry — API Gateway (C++23)                \n"
+              << "====================================================\n"
+              << " porta              : " << port << "\n"
+              << " PostgreSQL         : "
+              << (database->configured() ? (database->healthy() ? "conectado" : "configurado, sem resposta")
+                                         : "não configurado (APEX_DATABASE_URL)")
+              << "\n"
+              << " upstream OpenF1    : " << upstream->base_url() << "\n"
+              << " motor de estratégia: "
+              << (strategy.configured() ? strategy.base_url() : "não configurado (APEX_STRATEGY_URL)")
+              << "\n====================================================\n";
 
     apex::gateway::HttpServer server(port);
-    auto repository = std::make_shared<apex::gateway::DatabaseRepository>();
-    auto& metrics = apex::gateway::MetricsCollector::instance();
-    const auto start_time = std::chrono::steady_clock::now();
     g_server = &server;
-
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
 
-    // 0. Prometheus metrics endpoint
-    server.route("GET", "/metrics", [&metrics](const apex::gateway::HttpRequest&) {
-        return apex::gateway::HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", metrics.serialize(), {}};
+    // ---------------------------------------------------------------- métricas
+    server.route("GET", "/metrics", [&metrics](const HttpRequest&) {
+        return HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", metrics.serialize(), {}};
     });
 
-    // 1. Health check (enriched)
-    server.route("GET", "/api/v1/health", [repository, &metrics, start_time](const apex::gateway::HttpRequest&) {
-        const bool database_healthy = repository->healthy();
-        const auto uptime = std::chrono::steady_clock::now() - start_time;
-        const auto uptime_s = std::chrono::duration_cast<std::chrono::seconds>(uptime).count();
-        std::ostringstream json;
-        json << R"({"status":"healthy","service":"apex-api-gateway","version":"1.6.0-fase5")"
-             << R"(,"analytics_engine":"spatial_alignment_cpp23")"
-             << R"(,"database":{"configured":)" << (repository->configured() ? "true" : "false")
-             << R"(,"healthy":)" << (database_healthy ? "true" : "false") << "}"
-             << R"(,"uptime_seconds":)" << uptime_s
-             << R"(,"cpp_standard":202302})";
-        return apex::gateway::HttpResponse{200, "application/json", json.str(), {}};
-    });
+    // ------------------------------------------------------------------- saúde
+    server.route("GET", "/api/v1/health",
+                 instrumented("health", [database, resolver, &strategy, start_time](const HttpRequest&) {
+                     const auto uptime = std::chrono::duration_cast<std::chrono::seconds>(
+                                             std::chrono::steady_clock::now() - start_time)
+                                             .count();
+                     std::ostringstream json;
+                     json << R"({"status":"healthy","service":"apex-api-gateway","version":"2.0.0")"
+                          << R"(,"analytics_engine":"spatial_alignment_cpp23")"
+                          << R"(,"cpp_standard":202302)"
+                          << R"(,"database":{"configured":)" << (database->configured() ? "true" : "false")
+                          << R"(,"healthy":)" << (database->healthy() ? "true" : "false") << "}"
+                          << R"(,"upstream":{"provider":"openf1","base_url":"https://api.openf1.org/v1"})"
+                          << R"(,"strategy_engine":{"configured":)"
+                          << (strategy.configured() ? "true" : "false") << R"(,"healthy":)"
+                          << (strategy.healthy() ? "true" : "false") << "}"
+                          << R"(,"cache_entries":)" << resolver->cache_entries()
+                          << R"(,"uptime_seconds":)" << uptime << "}";
+                     return HttpResponse{200, "application/json", json.str(), {}};
+                 }));
 
-    // 2. Sessions listing
-    server.route("GET", "/api/v1/sessions", [repository](const apex::gateway::HttpRequest& req) {
-        std::optional<int> year;
-        if (const auto it = req.query_params.find("year"); it != req.query_params.end()) {
-            const auto parsed = parse_positive_integer(it->second);
-            if (!parsed || *parsed < 1950 || *parsed > 2200) return api_error(422, "INVALID_YEAR", "year must be between 1950 and 2200");
-            year = static_cast<int>(*parsed);
-        }
-        if (auto data = repository->sessions(year)) return data_response(std::move(*data), "postgresql");
-        std::string fallback = R"([
-            {"session_key":9472,"session_name":"Qualifying","session_type":"Qualifying","circuit_key":63,"circuit_name":"Bahrain International Circuit","country_name":"Bahrain","date_start":"2024-03-01T16:00:00Z","year":2024},
-            {"session_key":9473,"session_name":"Race","session_type":"Race","circuit_key":63,"circuit_name":"Bahrain International Circuit","country_name":"Bahrain","date_start":"2024-03-02T15:00:00Z","year":2024}
-        ])";
-        std::string data = read_file_or_default("data/normalized/sessions.json", fallback);
-        return data_response(std::move(data), "normalized-file-fallback");
-    });
+    // --------------------------------------------------------------- catálogo
+    server.route("GET", "/api/v1/sessions", instrumented("sessions", [resolver](const HttpRequest& request) {
+                     std::optional<int> year;
+                     if (const auto raw = query_value(request, "year")) {
+                         const auto parsed = parse_positive_integer(*raw);
+                         if (!parsed || *parsed < 1950 || *parsed > 2200) {
+                             return api_error(422, "INVALID_YEAR", "year must be between 1950 and 2200");
+                         }
+                         year = static_cast<int>(*parsed);
+                     }
+                     ResolveError error;
+                     const auto payload = resolver->sessions(year, error);
+                     if (!payload) return api_error(error);
+                     return data_response(payload->json, payload->source);
+                 }));
 
-    // 3. Drivers listing
-    server.route("GET", "/api/v1/sessions/:session_key/drivers", [repository](const apex::gateway::HttpRequest& req) {
-        const auto session = parse_positive_integer(req.path_params.at("session_key"));
-        if (!session) return api_error(400, "INVALID_SESSION_KEY", "session_key must be a positive integer");
-        if (auto data = repository->drivers(*session)) return data_response(std::move(*data), "postgresql");
-        if (*session != 9472) return api_error(404, "SESSION_NOT_FOUND", "No driver dataset is available for this session");
-        std::string fallback = R"([
-            {"driver_number":1,"broadcast_name":"M VERSTAPPEN","full_name":"Max Verstappen","name_acronym":"VER","team_name":"Red Bull Racing","team_colour":"#3671C6"},
-            {"driver_number":16,"broadcast_name":"C LECLERC","full_name":"Charles Leclerc","name_acronym":"LEC","team_name":"Scuderia Ferrari","team_colour":"#E8002D"},
-            {"driver_number":44,"broadcast_name":"L HAMILTON","full_name":"Lewis Hamilton","name_acronym":"HAM","team_name":"Mercedes-AMG","team_colour":"#27F4D2"},
-            {"driver_number":4,"broadcast_name":"L NORRIS","full_name":"Lando Norris","name_acronym":"NOR","team_name":"McLaren","team_colour":"#FF8000"}
-        ])";
-        std::string data = read_file_or_default("data/normalized/9472_drivers.json", fallback);
-        return data_response(std::move(data), "normalized-file-fallback");
-    });
+    server.route("GET", "/api/v1/sessions/:session_key/drivers",
+                 instrumented("drivers", [resolver](const HttpRequest& request) {
+                     const auto session = parse_positive_integer(request.path_params.at("session_key"));
+                     if (!session) {
+                         return api_error(400, "INVALID_SESSION_KEY",
+                                          "session_key must be a positive integer");
+                     }
+                     ResolveError error;
+                     const auto payload = resolver->drivers(*session, error);
+                     if (!payload) return api_error(error);
+                     return data_response(payload->json, payload->source);
+                 }));
 
-    // 4. Laps
-    server.route("GET", "/api/v1/sessions/:session_key/laps", [repository](const apex::gateway::HttpRequest& req) {
-        const auto session = parse_positive_integer(req.path_params.at("session_key"));
-        if (!session) return api_error(400, "INVALID_SESSION_KEY", "session_key must be a positive integer");
-        std::optional<int32_t> driver;
-        if (const auto it = req.query_params.find("driver_number"); it != req.query_params.end()) {
-            const auto parsed = parse_positive_integer(it->second);
-            if (!parsed) return api_error(422, "INVALID_DRIVER_NUMBER", "driver_number must be a positive integer");
-            driver = static_cast<int32_t>(*parsed);
-        }
-        if (auto data = repository->laps(*session, driver)) return data_response(std::move(*data), "postgresql");
-        if (*session != 9472) return api_error(404, "SESSION_NOT_FOUND", "No lap dataset is available for this session");
-        std::string data = R"([
-            {"lap_number":11,"lap_time_s":89.840,"is_valid":true,"lap_kind":"FLYING","compound":"SOFT","stint_number":2,"coverage_pct":99.8},
-            {"lap_number":12,"lap_time_s":112.450,"is_valid":false,"lap_kind":"IN_LAP","compound":"SOFT","stint_number":2,"coverage_pct":98.5},
-            {"lap_number":13,"lap_time_s":104.120,"is_valid":false,"lap_kind":"OUT_LAP","compound":"SOFT","stint_number":3,"coverage_pct":99.1},
-            {"lap_number":14,"lap_time_s":89.179,"is_valid":true,"lap_kind":"FLYING","compound":"SOFT","stint_number":3,"coverage_pct":100.0}
-        ])";
-        return data_response(std::move(data), "embedded-fallback");
-    });
+    server.route("GET", "/api/v1/sessions/:session_key/laps",
+                 instrumented("laps", [resolver](const HttpRequest& request) {
+                     const auto session = parse_positive_integer(request.path_params.at("session_key"));
+                     if (!session) {
+                         return api_error(400, "INVALID_SESSION_KEY",
+                                          "session_key must be a positive integer");
+                     }
+                     std::optional<int32_t> driver;
+                     if (const auto raw = query_value(request, "driver_number")) {
+                         const auto parsed = parse_positive_integer(*raw);
+                         if (!parsed) {
+                             return api_error(422, "INVALID_DRIVER_NUMBER",
+                                              "driver_number must be a positive integer");
+                         }
+                         driver = static_cast<int32_t>(*parsed);
+                     }
+                     ResolveError error;
+                     const auto payload = resolver->laps(*session, driver, error);
+                     if (!payload) return api_error(error);
+                     return data_response(payload->json, payload->source);
+                 }));
 
-    // 5. Race Control
-    server.route("GET", "/api/v1/sessions/:session_key/race-control", [repository](const apex::gateway::HttpRequest& req) {
-        const auto session = parse_positive_integer(req.path_params.at("session_key"));
-        if (!session) return api_error(400, "INVALID_SESSION_KEY", "session_key must be a positive integer");
-        if (auto data = repository->race_control(*session)) return data_response(std::move(*data), "postgresql");
-        if (*session != 9472) return api_error(404, "SESSION_NOT_FOUND", "No race-control dataset is available for this session");
-        std::string data = R"([
-            {"occurred_at":"2024-03-01T16:02:10Z","category":"Flag","flag":"GREEN","message":"PIT EXIT OPEN - SESSION STARTED"},
-            {"occurred_at":"2024-03-01T16:21:45Z","category":"Flag","flag":"YELLOW","message":"YELLOW FLAG IN SECTOR 2 - CAR 24 OFF TRACK TURN 8","sector":2},
-            {"occurred_at":"2024-03-01T16:44:12Z","category":"DRS","flag":"DRS_ENABLED","message":"DRS ENABLED ZONES 1, 2, 3"},
-            {"occurred_at":"2024-03-01T16:58:00Z","category":"Flag","flag":"CHEQUERED","message":"CHEQUERED FLAG - SESSION ENDED"}
-        ])";
-        return data_response(std::move(data), "embedded-fallback");
-    });
+    server.route("GET", "/api/v1/sessions/:session_key/stints",
+                 instrumented("stints", [resolver](const HttpRequest& request) {
+                     const auto session = parse_positive_integer(request.path_params.at("session_key"));
+                     if (!session) {
+                         return api_error(400, "INVALID_SESSION_KEY",
+                                          "session_key must be a positive integer");
+                     }
+                     std::optional<int32_t> driver;
+                     if (const auto raw = query_value(request, "driver_number")) {
+                         if (const auto parsed = parse_positive_integer(*raw)) {
+                             driver = static_cast<int32_t>(*parsed);
+                         }
+                     }
+                     ResolveError error;
+                     const auto payload = resolver->stints(*session, driver, error);
+                     if (!payload) return api_error(error);
+                     return data_response(payload->json, payload->source);
+                 }));
 
-    // 6. Distance-based Telemetry Comparison Engine (Fase 3)
-    server.route("GET", "/api/v1/analysis/compare", [](const apex::gateway::HttpRequest& req) {
-        const char* required[] = {"session_key", "ref_driver", "ref_lap", "comp_driver", "comp_lap"};
-        for (const auto* name : required) {
-            if (!req.query_params.contains(name)) return api_error(400, "MISSING_PARAMETER", std::string("Missing query parameter: ") + name);
-        }
-        auto session = parse_positive_integer(req.query_params.at("session_key"));
-        auto ref_driver = parse_positive_integer(req.query_params.at("ref_driver"));
-        auto ref_lap = parse_positive_integer(req.query_params.at("ref_lap"));
-        auto comp_driver = parse_positive_integer(req.query_params.at("comp_driver"));
-        auto comp_lap = parse_positive_integer(req.query_params.at("comp_lap"));
-        if (!session || !ref_driver || !ref_lap || !comp_driver || !comp_lap)
-            return api_error(422, "INVALID_PARAMETER", "Identifiers and lap numbers must be positive integers");
-        if (*session != 9472) return api_error(404, "SESSION_NOT_FOUND", "No telemetry dataset is available for this session");
-        if (*ref_driver == *comp_driver && *ref_lap == *comp_lap)
-            return api_error(422, "IDENTICAL_LAPS", "Reference and comparison laps must be different");
+    server.route("GET", "/api/v1/sessions/:session_key/race-control",
+                 instrumented("race-control", [resolver](const HttpRequest& request) {
+                     const auto session = parse_positive_integer(request.path_params.at("session_key"));
+                     if (!session) {
+                         return api_error(400, "INVALID_SESSION_KEY",
+                                          "session_key must be a positive integer");
+                     }
+                     ResolveError error;
+                     const auto payload = resolver->race_control(*session, error);
+                     if (!payload) return api_error(error);
+                     return data_response(payload->json, payload->source);
+                 }));
 
-        double step_m = 5.0;
-        if (const auto it = req.query_params.find("step_m"); it != req.query_params.end()) {
-            try {
-                size_t parsed = 0;
-                step_m = std::stod(it->second, &parsed);
-                if (parsed != it->second.size() || !std::isfinite(step_m) || step_m < 1.0 || step_m > 50.0)
-                    return api_error(422, "INVALID_GRID_STEP", "step_m must be between 1 and 50 meters");
-            } catch (...) {
-                return api_error(422, "INVALID_GRID_STEP", "step_m must be a finite number");
-            }
-        }
-        std::string payload = generate_live_comparison(*session, static_cast<int32_t>(*ref_driver), static_cast<int32_t>(*ref_lap), static_cast<int32_t>(*comp_driver), static_cast<int32_t>(*comp_lap), step_m);
-        return apex::gateway::HttpResponse{200, "application/json", std::move(payload), {}};
-    });
+    server.route("GET", "/api/v1/sessions/:session_key/weather",
+                 instrumented("weather", [resolver](const HttpRequest& request) {
+                     const auto session = parse_positive_integer(request.path_params.at("session_key"));
+                     if (!session) {
+                         return api_error(400, "INVALID_SESSION_KEY",
+                                          "session_key must be a positive integer");
+                     }
+                     ResolveError error;
+                     const auto payload = resolver->weather(*session, error);
+                     if (!payload) return api_error(error);
+                     return data_response(payload->json, payload->source);
+                 }));
 
-    // 6.1. Telemetry Export Engine (MoTeC CSV & JSON) (Fase 6)
-    server.route("GET", "/api/v1/analysis/export", [](const apex::gateway::HttpRequest& req) {
-        int32_t ref_driver = 1;
-        int32_t comp_driver = 16;
-        double step_m = 5.0;
+    // Traçado real do circuito, reconstruído do transponder de posição.
+    server.route("GET", "/api/v1/sessions/:session_key/circuit",
+                 instrumented("circuit", [resolver](const HttpRequest& request) {
+                     const auto session = parse_positive_integer(request.path_params.at("session_key"));
+                     if (!session) {
+                         return api_error(400, "INVALID_SESSION_KEY",
+                                          "session_key must be a positive integer");
+                     }
+                     ResolveError error;
+                     const auto payload = resolver->circuit_geometry(*session, error);
+                     if (!payload) return api_error(error);
+                     return data_response(payload->json, payload->source);
+                 }));
 
-        if (const auto it = req.query_params.find("ref_driver"); it != req.query_params.end()) {
-            if (auto p = parse_positive_integer(it->second)) ref_driver = static_cast<int32_t>(*p);
-        }
-        if (const auto it = req.query_params.find("comp_driver"); it != req.query_params.end()) {
-            if (auto p = parse_positive_integer(it->second)) comp_driver = static_cast<int32_t>(*p);
-        }
-        if (const auto it = req.query_params.find("step_m"); it != req.query_params.end()) {
-            try { step_m = std::stod(it->second); } catch (...) {}
-        }
+    // ---------------------------------------------------------------- análise
+    server.route("GET", "/api/v1/analysis/compare",
+                 instrumented("analysis-compare", [resolver, &strategy](const HttpRequest& request) {
+                     HttpResponse failure;
+                     const auto query = parse_comparison_query(request, failure);
+                     if (!query) return failure;
 
-        std::string format = "motec_csv";
-        if (const auto it = req.query_params.find("format"); it != req.query_params.end()) {
-            format = it->second;
-        }
+                     ResolveError error;
+                     const auto result =
+                         run_comparison(*resolver, strategy, query->session_key, query->ref_driver,
+                                        query->ref_lap, query->comp_driver, query->comp_lap,
+                                        query->step_m, error);
+                     if (!result) return api_error(error);
 
-        if (format == "json") {
-            std::string payload = generate_live_comparison(9472, ref_driver, 14, comp_driver, 15, step_m);
-            return apex::gateway::HttpResponse{200, "application/json", std::move(payload), {
-                {"Content-Disposition", "attachment; filename=\"apex_telemetry_export.json\""}
-            }};
-        }
+                     auto body = SpatialAlignmentEngine::build_comparison_json(
+                         result->session, result->ref_lap, result->comp_lap, result->grid_step_m,
+                         result->channels, result->corners, result->speed_traps, result->microsectors,
+                         result->quality, result->insights_json);
 
-        std::string csv = generate_live_motec_csv(ref_driver, comp_driver, step_m);
-        return apex::gateway::HttpResponse{200, "text/csv; charset=utf-8", std::move(csv), {
-            {"Content-Disposition", "attachment; filename=\"apex_telemetry_motec.csv\""},
-            {"X-Apex-Export-Format", "MoTeC-CSV-v1"}
-        }};
-    });
+                     MetricsCollector::instance().record_source(result->session.data_source);
+                     return HttpResponse{200,
+                                         "application/json",
+                                         std::move(body),
+                                         {{"X-Apex-Data-Source", result->session.data_source},
+                                          {"X-Apex-Insight-Engine", result->insights_engine}}};
+                 }));
 
-    // 7. Server-Sent Events (SSE) Live Session Stream (Fase 5)
-    server.route_sse("/api/v1/sessions/:session_key/live", [&metrics](const apex::gateway::HttpRequest& req, const apex::gateway::SseWriter& writer, const std::atomic<bool>& running) {
-        auto session = parse_positive_integer(req.path_params.at("session_key"));
-        if (!session) {
-            writer.send(R"({"error":"Invalid session key","code":"INVALID_SESSION_KEY"})", "error");
-            return;
-        }
+    server.route("GET", "/api/v1/analysis/export",
+                 instrumented("analysis-export", [resolver, &strategy](const HttpRequest& request) {
+                     HttpResponse failure;
+                     const auto query = parse_comparison_query(request, failure);
+                     if (!query) return failure;
 
-        // Handshake inicial
-        writer.send(R"({"status":"connected","session_key":)" + std::to_string(*session) + R"(,"transport":"sse","heartbeat_ms":1000})", "init", "0");
+                     ResolveError error;
+                     const auto result =
+                         run_comparison(*resolver, strategy, query->session_key, query->ref_driver,
+                                        query->ref_lap, query->comp_driver, query->comp_lap,
+                                        query->step_m, error);
+                     if (!result) return api_error(error);
 
-        uint64_t seq = 1;
-        double simulated_distance = 0.0;
-        while (running && writer.connected()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            simulated_distance += 35.0; // ~250 km/h
-            if (simulated_distance > 5412.0) simulated_distance = 0.0;
+                     const auto format = query_value(request, "format").value_or("motec_csv");
+                     const std::string stem = "apex_" + result->ref_lap.driver_code + "_L" +
+                                              std::to_string(result->ref_lap.lap_number) + "_vs_" +
+                                              result->comp_lap.driver_code + "_L" +
+                                              std::to_string(result->comp_lap.lap_number);
 
-            // Transmite tick de telemetria em tempo real
-            std::ostringstream tick;
-            tick << "{\"seq\":" << seq
-                 << ",\"distance_m\":" << simulated_distance
-                 << ",\"ref_speed_kmh\":" << (280.0 + 35.0 * std::sin(simulated_distance / 200.0))
-                 << ",\"comp_speed_kmh\":" << (278.0 + 34.0 * std::sin(simulated_distance / 200.0))
-                 << ",\"delta_s\":" << (0.120 + 0.080 * std::sin(simulated_distance / 500.0))
-                 << "}";
-            if (!writer.send(tick.str(), "telemetry_tick", std::to_string(seq))) {
-                break;
-            }
+                     if (format == "json") {
+                         auto body = SpatialAlignmentEngine::build_comparison_json(
+                             result->session, result->ref_lap, result->comp_lap, result->grid_step_m,
+                             result->channels, result->corners, result->speed_traps,
+                             result->microsectors, result->quality, result->insights_json);
+                         return HttpResponse{
+                             200,
+                             "application/json",
+                             std::move(body),
+                             {{"Content-Disposition", "attachment; filename=\"" + stem + ".json\""}}};
+                     }
+                     if (format != "motec_csv") {
+                         return api_error(422, "INVALID_FORMAT",
+                                          "format must be either 'motec_csv' or 'json'");
+                     }
 
-            // A cada 10 ticks, envia evento de race control
-            if (seq % 10 == 0) {
-                std::string rc = R"({"category":"Flag","flag":"GREEN","message":"TRACK CLEAR - SECTOR 2"})";
-                writer.send(rc, "race_control", std::to_string(seq));
-            }
+                     auto csv = SpatialAlignmentEngine::export_motec_csv(
+                         result->session, result->ref_lap, result->comp_lap, result->channels);
+                     return HttpResponse{
+                         200,
+                         "text/csv; charset=utf-8",
+                         std::move(csv),
+                         {{"Content-Disposition", "attachment; filename=\"" + stem + ".csv\""},
+                          {"X-Apex-Export-Format", "MoTeC-CSV-v1"}}};
+                 }));
 
-            seq++;
-        }
-    });
+    // Degradação real dos stints, avaliada pelo motor de domínio em Haskell.
+    server.route("GET", "/api/v1/analysis/degradation",
+                 instrumented("analysis-degradation", [resolver, &strategy](const HttpRequest& request) {
+                     const auto raw_session = query_value(request, "session_key");
+                     if (!raw_session) {
+                         return api_error(400, "MISSING_PARAMETER", "Missing query parameter: session_key");
+                     }
+                     const auto session_key = parse_positive_integer(*raw_session);
+                     if (!session_key) {
+                         return api_error(422, "INVALID_SESSION_KEY",
+                                          "session_key must be a positive integer");
+                     }
+                     std::optional<int32_t> driver;
+                     if (const auto raw = query_value(request, "driver_number")) {
+                         const auto parsed = parse_positive_integer(*raw);
+                         if (!parsed) {
+                             return api_error(422, "INVALID_DRIVER_NUMBER",
+                                              "driver_number must be a positive integer");
+                         }
+                         driver = static_cast<int32_t>(*parsed);
+                     }
+                     if (!strategy.configured()) {
+                         return api_error(503, "STRATEGY_ENGINE_UNAVAILABLE",
+                                          "Tyre degradation analysis requires the Haskell strategy "
+                                          "engine; set APEX_STRATEGY_URL on the gateway");
+                     }
 
-    server.start(true); // blocks until shutdown
+                     ResolveError error;
+                     const auto session = resolver->session_metadata(*session_key, error);
+                     if (!session) return api_error(error);
+
+                     const auto payload =
+                         build_degradation_request(*resolver, *session_key, driver, *session, error);
+                     if (payload.empty()) return api_error(error);
+
+                     const auto analysed = strategy.degradation(payload);
+                     MetricsCollector::instance().record_strategy(analysed.has_value());
+                     if (!analysed) {
+                         return api_error(502, "STRATEGY_ENGINE_ERROR", strategy.last_error());
+                     }
+
+                     std::ostringstream body;
+                     body << "{\"session_key\":" << *session_key << ",\"engine\":\"strategy-hs\",";
+                     if (session->track_temperature_c) {
+                         body << "\"track_temperature_c\":"
+                              << format_number(*session->track_temperature_c, 1) << ',';
+                     }
+                     body << "\"stints\":" << *analysed << '}';
+                     return data_response(body.str(), session->data_source);
+                 }));
+
+    // -------------------------------------------------------------------- SSE
+    /**
+     * Reprodução da comparação real em tempo de pista. Cada quadro transporta a
+     * distância, as velocidades e o delta efetivamente medidos; o intervalo entre
+     * quadros é o tempo real entre os pontos, dividido pelo fator de velocidade.
+     */
+    server.route_sse("/api/v1/sessions/:session_key/live",
+                     [resolver, &strategy](const HttpRequest& request,
+                                           const apex::gateway::SseWriter& writer,
+                                           const std::atomic<bool>& running) {
+                         const auto session_key =
+                             parse_positive_integer(request.path_params.at("session_key"));
+                         if (!session_key) {
+                             writer.send(R"({"error":"session_key must be a positive integer",)"
+                                         R"("code":"INVALID_SESSION_KEY"})",
+                                         "error");
+                             return;
+                         }
+
+                         HttpRequest synthetic = request;
+                         synthetic.query_params["session_key"] = std::to_string(*session_key);
+                         HttpResponse failure;
+                         const auto query = parse_comparison_query(synthetic, failure);
+                         if (!query) {
+                             writer.send(failure.body, "error");
+                             return;
+                         }
+
+                         double speed = 1.0;
+                         if (const auto raw = query_value(request, "speed")) {
+                             try {
+                                 speed = std::stod(*raw);
+                             } catch (...) {
+                                 speed = 1.0;
+                             }
+                         }
+                         speed = std::clamp(speed, 0.1, 50.0);
+
+                         ResolveError error;
+                         const auto result = run_comparison(
+                             *resolver, strategy, query->session_key, query->ref_driver, query->ref_lap,
+                             query->comp_driver, query->comp_lap, query->step_m, error);
+                         if (!result) {
+                             std::ostringstream message;
+                             message << "{\"error\":\""
+                                     << SpatialAlignmentEngine::json_escape(error.message)
+                                     << "\",\"code\":\"" << error.code << "\"}";
+                             writer.send(message.str(), "error");
+                             return;
+                         }
+
+                         std::ostringstream init;
+                         init << "{\"status\":\"connected\",\"mode\":\"replay\",\"session_key\":"
+                              << *session_key << ",\"transport\":\"sse\",\"speed\":"
+                              << format_number(speed, 2) << ",\"points\":" << result->channels.size()
+                              << ",\"total_distance_m\":"
+                              << format_number(result->channels.back().distance_m, 1)
+                              << ",\"data_source\":\""
+                              << SpatialAlignmentEngine::json_escape(result->session.data_source)
+                              << "\",\"reference\":\"" << result->ref_lap.driver_code << " L"
+                              << result->ref_lap.lap_number << "\",\"comparison\":\""
+                              << result->comp_lap.driver_code << " L" << result->comp_lap.lap_number
+                              << "\"}";
+                         writer.send(init.str(), "init", "0");
+
+                         // Eventos de direção de prova da sessão, emitidos uma vez no início
+                         // para que o cliente tenha o contexto oficial completo.
+                         ResolveError race_control_error;
+                         if (const auto events = resolver->race_control(*session_key, race_control_error)) {
+                             writer.send(events->json, "race_control", "rc");
+                         }
+
+                         uint64_t sequence = 1;
+                         for (size_t i = 0; i < result->channels.size() && running && writer.connected();
+                              ++i) {
+                             const auto& point = result->channels[i];
+                             if (i > 0) {
+                                 const double dt =
+                                     (point.ref.time_s - result->channels[i - 1].ref.time_s) / speed;
+                                 if (dt > 0.0 && dt < 5.0) {
+                                     std::this_thread::sleep_for(
+                                         std::chrono::microseconds(static_cast<int64_t>(dt * 1e6)));
+                                 }
+                             }
+
+                             std::ostringstream tick;
+                             tick << "{\"seq\":" << sequence
+                                  << ",\"distance_m\":" << format_number(point.distance_m, 1)
+                                  << ",\"elapsed_s\":" << format_number(point.ref.time_s, 3)
+                                  << ",\"delta_s\":" << format_number(point.delta_time_s, 4)
+                                  << ",\"ref_speed_kmh\":" << format_number(point.ref.speed_kmh, 1)
+                                  << ",\"comp_speed_kmh\":" << format_number(point.comp.speed_kmh, 1)
+                                  << ",\"ref_gear\":" << point.ref.gear
+                                  << ",\"comp_gear\":" << point.comp.gear
+                                  << ",\"ref_throttle_pct\":" << format_number(point.ref.throttle_pct, 0)
+                                  << ",\"comp_throttle_pct\":" << format_number(point.comp.throttle_pct, 0)
+                                  << ",\"ref_brake_pct\":" << format_number(point.ref.brake_pct, 0)
+                                  << ",\"comp_brake_pct\":" << format_number(point.comp.brake_pct, 0)
+                                  << ",\"ref_drs\":" << (point.ref.drs ? "true" : "false")
+                                  << ",\"comp_drs\":" << (point.comp.drs ? "true" : "false") << '}';
+                             if (!writer.send(tick.str(), "telemetry_tick", std::to_string(sequence))) break;
+                             ++sequence;
+                         }
+
+                         if (running && writer.connected()) {
+                             writer.send(R"({"status":"completed"})", "end",
+                                         std::to_string(sequence));
+                         }
+                     });
+
+    server.start(true);
     return 0;
 }

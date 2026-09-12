@@ -50,9 +50,22 @@ public:
         if (!success) db_errors_total_.fetch_add(1, std::memory_order_relaxed);
     }
 
-    /// Record a fallback (file or embedded) being used.
-    void record_fallback() {
-        fallbacks_total_.fetch_add(1, std::memory_order_relaxed);
+    /// Record which data source served a request ("postgresql", "openf1-upstream", ...).
+    void record_source(const std::string& source) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        source_requests_[source]++;
+    }
+
+    /// Record a call to the OpenF1 upstream.
+    void record_upstream(bool success) {
+        upstream_calls_total_.fetch_add(1, std::memory_order_relaxed);
+        if (!success) upstream_errors_total_.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    /// Record a call to the Haskell strategy engine.
+    void record_strategy(bool success) {
+        strategy_calls_total_.fetch_add(1, std::memory_order_relaxed);
+        if (!success) strategy_errors_total_.fetch_add(1, std::memory_order_relaxed);
     }
 
     /// Serialize all metrics in Prometheus text exposition format.
@@ -91,6 +104,12 @@ public:
             out << "apex_http_request_duration_seconds_bucket{le=\"+Inf\"} " << cumulative << "\n"
                 << "apex_http_request_duration_seconds_sum " << latency_sum_ << "\n"
                 << "apex_http_request_duration_seconds_count " << latency_count_ << "\n";
+
+            out << "\n# HELP apex_requests_by_source_total Requests by resolved data source.\n"
+                << "# TYPE apex_requests_by_source_total counter\n";
+            for (const auto& [source, count] : source_requests_) {
+                out << "apex_requests_by_source_total{source=\"" << source << "\"} " << count << "\n";
+            }
         }
 
         // -- Database metrics
@@ -102,10 +121,21 @@ public:
             << "# TYPE apex_db_errors_total counter\n"
             << "apex_db_errors_total " << db_errors_total_.load(std::memory_order_relaxed) << "\n";
 
-        // -- Fallback usage
-        out << "\n# HELP apex_fallbacks_total Times a fallback data source was used.\n"
-            << "# TYPE apex_fallbacks_total counter\n"
-            << "apex_fallbacks_total " << fallbacks_total_.load(std::memory_order_relaxed) << "\n";
+        out << "\n# HELP apex_upstream_calls_total Calls issued to the OpenF1 upstream.\n"
+            << "# TYPE apex_upstream_calls_total counter\n"
+            << "apex_upstream_calls_total " << upstream_calls_total_.load(std::memory_order_relaxed) << "\n";
+
+        out << "\n# HELP apex_upstream_errors_total Failed OpenF1 upstream calls.\n"
+            << "# TYPE apex_upstream_errors_total counter\n"
+            << "apex_upstream_errors_total " << upstream_errors_total_.load(std::memory_order_relaxed) << "\n";
+
+        out << "\n# HELP apex_strategy_calls_total Calls issued to the Haskell strategy engine.\n"
+            << "# TYPE apex_strategy_calls_total counter\n"
+            << "apex_strategy_calls_total " << strategy_calls_total_.load(std::memory_order_relaxed) << "\n";
+
+        out << "\n# HELP apex_strategy_errors_total Failed strategy engine calls.\n"
+            << "# TYPE apex_strategy_errors_total counter\n"
+            << "apex_strategy_errors_total " << strategy_errors_total_.load(std::memory_order_relaxed) << "\n";
 
         return out.str();
     }
@@ -137,11 +167,15 @@ private:
     std::atomic<uint64_t> requests_total_{0};
     std::atomic<uint64_t> db_queries_total_{0};
     std::atomic<uint64_t> db_errors_total_{0};
-    std::atomic<uint64_t> fallbacks_total_{0};
+    std::atomic<uint64_t> upstream_calls_total_{0};
+    std::atomic<uint64_t> upstream_errors_total_{0};
+    std::atomic<uint64_t> strategy_calls_total_{0};
+    std::atomic<uint64_t> strategy_errors_total_{0};
 
     mutable std::mutex mutex_;
     std::map<std::string, uint64_t> route_requests_;
     std::map<std::string, uint64_t> status_requests_;
+    std::map<std::string, uint64_t> source_requests_;
 
     // Histogram buckets: 1ms, 5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 5s
     const std::vector<double> histogram_bounds_ = {0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 5.0};

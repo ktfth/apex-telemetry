@@ -1,112 +1,157 @@
-# ApexTelemetry — Arquitetura do Sistema
+# Arquitetura
 
-## 1. Visão Geral
+## Princípio único
 
-O **ApexTelemetry** é uma plataforma de engenharia para análise aprofundada de telemetria de Fórmula 1 voltada a engenheiros, analistas de performance e criadores de conteúdo técnico. O sistema foi desenhado segundo princípios de computação de alta performance e determinismo analítico:
+**Todo número exibido veio de uma medição.** Quando não há medição, o sistema diz
+que não há — em vez de produzir um valor plausível. Esse princípio determina a
+forma de cada camada abaixo e está registrado em
+[ADR-006](adr/ADR-006-no-synthetic-telemetry.md).
 
-1. **Alta Densidade e Baixa Latência (C++23)**: Ingestão, normalização, reamostragem espacial (distância) e cálculos numéricos pesados executados nativamente.
-2. **Determinismo e Explicabilidade Formal (Haskell)**: Classificação de voltas, stints, estratégias e geração de insights auditáveis baseados exclusivamente em evidências empíricas e tipos estritos.
-3. **Interface Técnica de Engenharia (Next.js / TypeScript / uPlot / SVG)**: Experiência visual sóbria estilo instrumentação de telemetria de pista, com crosshair sincronizado em 60fps, mapas de circuito vetoriais com delta heatmap e dados tabulares mono-espaçados.
+---
 
-```mermaid
-flowchart TD
-    subgraph DataSources["Fontes Externas"]
-        OpenF1["OpenF1 API / WebSocket"]
-        LiveTiming["Live Timing Stream (Futuro)"]
-    end
+## Fluxo de dados
 
-    subgraph Storage["Camada de Persistência & Streaming"]
-        Postgres[("PostgreSQL 16 + TimescaleDB\n(Raw + Normalized + Laps)")]
-        Redis[("Redis 7\n(Sessões ativas & Cache efêmero)")]
-        NATS[("NATS JetStream\n(Bus de eventos distribuídos)")]
-    end
-
-    subgraph Services["Serviços Especializados"]
-        Ingest["ingest-cpp\n(C++23 Ingestion, Normalizer & Replay)"]
-        Analytics["analytics-cpp\n(C++23 Numerical Distance Resampling & Delta)"]
-        Strategy["strategy-hs\n(Haskell Pure Rules, Stints & Evidence Insights)"]
-        Gateway["api-gateway-cpp\n(C++23 Drogon REST & WS)"]
-    end
-
-    subgraph Client["Camada de Apresentação"]
-        WebUI["apps/web (Next.js App Router)\n- uPlot Synchronized Multi-Series\n- SVG Interactive Circuit Map\n- TanStack Query + Zustand\n- Tabular Monospace Instrumentation"]
-    end
-
-    OpenF1 --> Ingest
-    LiveTiming --> Ingest
-    Ingest -->|Raw Payloads & Normalized Events| Postgres
-    Ingest -->|Telemetria Raw Streams| NATS
-    NATS --> Analytics
-    Postgres --> Analytics
-    Analytics -->|Distance Resampled Series & Deltas| Postgres
-    Analytics -->|Telemetry Segments & Metrics| Strategy
-    Strategy -->|Validated Stints & Explanations| Postgres
-    Gateway --> Postgres
-    Gateway --> Redis
-    Gateway --> Analytics
-    Gateway --> Strategy
-    WebUI <-->|HTTP / JSON REST & WS| Gateway
+```
+                  ┌──────────────────────────────────────────┐
+                  │          OpenF1 (api.openf1.org)         │
+                  │  sessions · drivers · laps · stints      │
+                  │  car_data · location · race_control      │
+                  │  weather                                 │
+                  └───────────────┬──────────────────────────┘
+                                  │ HTTPS
+              ┌───────────────────┴───────────────────┐
+              │                                       │
+   ┌──────────▼───────────┐              ┌────────────▼─────────────┐
+   │   apex_ingest        │              │   api-gateway-cpp        │
+   │   (C++23, em lote)   │              │   (C++23, serviço)       │
+   │                      │              │                          │
+   │ • arquiva o payload  │              │ 1. PostgreSQL            │
+   │   bruto por SHA-256  │──escreve──┐  │ 2. OpenF1 ao vivo+cache  │
+   │ • upsert idempotente │           │  │ 3. erro estruturado      │
+   │ • COPY para séries   │           │  │                          │
+   └──────────────────────┘           │  │ ┌──────────────────────┐ │
+                                      │  │ │ analytics-cpp        │ │
+              ┌───────────────────────▼┐ │ │ integra distância    │ │
+              │ PostgreSQL/TimescaleDB ├─┼─┤ grade métrica        │ │
+              │ sessions · drivers     │ │ │ delta · curvas       │ │
+              │ laps · stints          │ │ │ microsetores · traps │ │
+              │ telemetry_samples (HT) │ │ │ auditoria            │ │
+              │ location_samples (HT)  │ │ └──────────┬───────────┘ │
+              │ race_control · weather │ │            │             │
+              │ raw_payloads           │ │  evidência │ medida      │
+              └────────────────────────┘ │            ▼             │
+                                         │ ┌──────────────────────┐ │
+                                         │ │ strategy-hs (Haskell)│ │
+                                         │ │ narrativa explicável │ │
+                                         │ │ degradação de pneus  │ │
+                                         │ └──────────────────────┘ │
+                                         └────────────┬─────────────┘
+                                                      │ REST + SSE
+                                         ┌────────────▼─────────────┐
+                                         │      apps/web (Next.js)  │
+                                         │  gráficos · mapa · abas  │
+                                         └──────────────────────────┘
 ```
 
 ---
 
-## 2. Fronteiras de Responsabilidade e Separação de Serviços
+## Serviços
 
-| Serviço | Linguagem / Stack | Papel Operacional | Justificativa Técnica |
-| :--- | :--- | :--- | :--- |
-| **`ingest-cpp`** | C++23, libcurl, simdjson, libpqxx, NATS C++ | Ingestão resiliente, retry exponencial, parse ultra-rápido de JSON, normalização e publicação em streaming. | Zero-allocation parsing via simdjson, throughput de dezenas de milhares de amostras/s, controle fino de memória. |
-| **`analytics-cpp`** | C++23, Eigen / std::valarray, Drogon / Boost.Asio | Reamostragem espacial baseada em distância cumulativa ($\Delta d = v \cdot \Delta t$), interpolação spline/linear com salvaguardas, cálculo de delta temporal e alinhamento de canais. | Cálculos vetoriais paralelizáveis com vetores contíguos de memória em cache L1/L2, sem garbage collection. |
-| **`strategy-hs`** | Haskell (GHC), Servant, Aeson, Hasql | Classificação categórica de voltas (`flying`, `out-lap`, `in-lap`, `safety-car`), stints de pneus, validação de integridade e geração de insights explicáveis. | O sistema de tipos algébricos e pureza funcional previne estados inválidos e garante regras auditáveis de inferência sem efeitos colaterais. |
-| **`api-gateway-cpp`**| C++23, Drogon, redis-plus-plus | Ponto único de entrada REST e WebSocket multiplexado para o frontend, autenticação e rate-limiting. | Baixíssima latência na entrega de pacotes de telemetria serializados e suporte massivo a conexões WS simultâneas. |
-| **`apps/web`** | Next.js 15, TypeScript Strict, Tailwind CSS, uPlot, D3, SVG | Dashboard de engenharia de alta fidelidade com visual escuro graphite, crosshair unificado entre telemetria e mapa de pista. | Renderização rápida via Canvas/uPlot, reatividade isolada via Zustand e tipagem ponta a ponta. |
+### `services/common` — camada compartilhada
+
+Existe para que gateway e ingestão falem com a OpenF1 pelo **mesmo** código. Antes
+havia duas implementações do cliente HTTP e duas do parser, que divergiam.
+
+- `http/` — cliente com handle persistente (keep-alive), rate limiting cooperativo
+  e backoff exponencial. Recuo agressivo em HTTP 429.
+- `openf1/` — cliente tipado da OpenF1 sobre simdjson. Normaliza as idiossincrasias
+  do upstream: freio 0/1 versus 0/100, estados de DRS (8 = elegível, 10/12/14 =
+  aberto), amostras de posição em (0,0) por perda de sinal, campos nulos que
+  permanecem ausentes em vez de virarem zero.
+- `time/` — ISO-8601 ↔ microssegundos UTC. Tempo absoluto nunca trafega em ponto
+  flutuante.
+- `hash/` — SHA-256 autocontido, para endereçar payloads por conteúdo.
+- `testing/` — servidor HTTP mínimo, para exercitar o cliente pelo caminho real.
+
+### `services/ingest-cpp` — ingestão
+
+Processo em lote. Para cada sessão: arquiva cada resposta byte a byte endereçada
+pelo digest, e escreve o resultado interpretado no armazém em transações
+idempotentes. As séries de alta frequência entram por `COPY` em tabela temporária
+promovida com `ON CONFLICT DO NOTHING` — milhares de amostras por volta tornariam
+`INSERT` linha a linha inviável.
+
+A cobertura de cada volta é **medida** (fração do tempo de volta coberta por
+amostras, descontadas as lacunas) e gravada em `laps.coverage_pct`.
+
+### `services/analytics-cpp` — motor de alinhamento espacial
+
+Biblioteca ligada ao gateway. Puro cálculo, sem I/O:
+
+1. **Integração de distância** — regra trapezoidal sobre velocidade e tempo.
+2. **Normalização do eixo** — ver [ADR-007](adr/ADR-007-lap-axis-normalisation.md).
+3. **Reamostragem** em grade métrica, com limite de lacuna derivado da taxa de
+   amostragem real.
+4. **Delta** `ΔT(d) = t_comp(d) − t_ref(d)`.
+5. **Detecção de curvas** — mínimos locais de velocidade com proeminência mínima.
+   Os rótulos são `C1..Cn`, a ordem de aparição, **não** a numeração oficial do
+   circuito: a 4 Hz o traço não resolve curvas tomadas em carga plena, e rotulá-las
+   como "T7" afirmaria uma correspondência que o dado não sustenta.
+6. **Segmentos de perda** — janelas ancoradas nas curvas e nas retas entre elas,
+   ordenadas por tempo perdido, com a causa dominante escolhida por peso relativo
+   da evidência (velocidade de ápice, retomada de acelerador, ponto de freada,
+   velocidade de ponta).
+7. **Speed traps** — os sensores oficiais I1/I2/linha de chegada, localizados no
+   eixo pelo tempo de setor real, mais os picos medidos nos canais.
+8. **Auditoria** — cobertura, maior lacuna, intervalo mediano e o desvio de
+   fechamento do delta contra o cronômetro.
+
+### `services/api-gateway-cpp` — gateway
+
+- `telemetry_resolver` — a cascata PostgreSQL → OpenF1 → erro, com cache tipado
+  por TTL. Uma comparação precisa de pilotos, voltas e stints das duas voltas; sem
+  memorizar, o mesmo `/drivers` seria pedido várias vezes na mesma requisição e o
+  upstream passaria a recusar.
+- `database_repository` — leitura do armazém, tipada e em JSON de passagem.
+- `strategy_client` — HTTP para o motor Haskell, com timeout curto: sua
+  indisponibilidade degrada a narrativa, não a análise.
+- `http_server` — servidor próprio com roteamento por padrão e suporte a SSE.
+- `metrics_collector` — exposição Prometheus, alimentada por todas as rotas.
+
+### `services/strategy-hs` — motor de domínio
+
+Serviço HTTP (warp) puro em relação aos dados: não busca telemetria e não guarda
+estado. Recebe evidência já medida e devolve narrativa.
+
+- `POST /v1/insights` — transforma segmentos em explicação. Cada frase cita um
+  número da entrada. As premissas e limitações são **derivadas dos fatos**: compostos
+  diferentes entre as voltas, diferença de idade de pneu, confiança baixa no trecho
+  e perda próxima da resolução da grade viram itens declarados.
+- `POST /v1/degradation` — regressão linear sobre os tempos reais do stint, com
+  outliers de tráfego descartados, publicada ao lado da previsão do modelo térmico
+  para que a diferença entre medição e modelo fique visível.
+
+O tipo de retorno da recomendação de parada é `Maybe`: quando a degradação medida
+não justifica a passagem pelos boxes dentro do horizonte restante, não existe
+recomendação — e o sistema de tipos garante que o chamador trate esse caso.
+
+### `apps/web` — interface
+
+Cliente do gateway. Sem estado inicial de demonstração: cada recurso remoto tem
+`data | loading | error`, e a interface distingue os três visualmente. O mapa do
+circuito consome a geometria reconstruída pelo gateway — não há nenhuma coordenada
+de circuito no frontend.
 
 ---
 
-## 3. Qualidade, Cobertura e Limitações dos Dados Públicos
+## Decisões registradas
 
-Dados de telemetria pública (como OpenF1) possuem características distintas de telemetria proprietária de equipes (ATLAS / Wintax / MoTeC):
-
-1. **Taxa de Amostragem Variável**: OpenF1 agrega dados de broadcast a taxas que oscilam entre 3 Hz e 10 Hz para canais de carro, ao passo que telemetria de ECU oficial opera em 50 Hz – 200 Hz.
-2. **Discretização de Marcha e DRS**: O canal de DRS e marchas pode sofrer latência de broadcast (atraso de até 200–500 ms em relação ao sinal real do volante).
-3. **Incerteza na Posição Espacial**: Coordenadas X/Y de GPS de broadcast sofrem com oclusões, reflexões multipath e interpolação imprecisa nas zebras.
-4. **Política de Transparência do ApexTelemetry**:
-   - Todo gráfico e tabela exibe o percentual de cobertura da volta ($n_{\text{amostras}} / n_{\text{esperado}}$).
-   - Lacunas temporais $> 500\text{ ms}$ são sinalizadas visualmente como "Incomplete / Discontinuous" e não interpoladas artificialmente.
-   - Qualquer inferência do motor de estratégia (Haskell) carrega uma pontuação explícita de confiança (`Confidence: 0.0 - 1.0`) e lista de premissas e limitações.
-
----
-
-## 4. Pipeline de Processamento Numérico de Voltas
-
-```mermaid
-sequenceDiagram
-    participant Ingest as Ingest C++
-    participant DB as TimescaleDB
-    participant Analytics as Analytics C++
-    participant Strategy as Strategy Haskell
-    participant UI as Web Client
-
-    Ingest->>DB: Ingestão de Raw Telemetry (Speed, Throttle, Brake, RPM, Gear, DRS)
-    UI->>Analytics: Requisita comparação (Volta A vs Volta B)
-    Analytics->>DB: Busca amostras ordenadas por timestamp
-    Analytics->>Analytics: Converte velocidade para m/s
-    Analytics->>Analytics: Integração trapezoidal de distância acumulada
-    Analytics->>Analytics: Reamostragem em grade espacial fixa (5 metros)
-    Analytics->>Analytics: Cálculo de tempo acumulado e Delta de Tempo
-    Analytics->>Strategy: Envia segmentos de telemetria e métricas calculadas
-    Strategy->>Strategy: Avalia elegibilidade de volta, stints e micro-setores
-    Strategy->>Strategy: Dedução lógica de perda/ganho com evidências numéricas
-    Strategy-->>Analytics: Retorna lista de Insights auditáveis
-    Analytics-->>UI: Retorna ComparisonPayload (Grid 5m, Canais, Deltas, Insights, Qualidade)
-    UI->>UI: Renderiza gráficos sincronizados via uPlot e mapa SVG
-```
-
----
-
-## 5. Estratégia de Deploy e Execução Local
-
-O monorepo suporta execução 100% local com orquestração via Docker Compose:
-- **TimescaleDB**: Tabela particionada temporalmente por `occurred_at`.
-- **Redis**: Armazena sessões ativas e cache de comparações recentes.
-- **NATS**: Tópicos `telemetry.raw`, `telemetry.normalized`, `racecontrol.events`.
-- **Modo Standalone / Demo**: O frontend conta com um mock determinístico completo baseado em telemetria do GP do Bahrein de 2024 (Verstappen vs Leclerc), explicitamente marcado como fixture de desenvolvimento para permitir trabalho imediato de UI sem dependência de containers externos.
+| ADR | Assunto |
+| --- | --- |
+| [001](adr/ADR-001-cpp-package-manager.md) | Gerenciamento de dependências C++ |
+| [002](adr/ADR-002-distance-based-telemetry-alignment.md) | Alinhamento por distância |
+| [003](adr/ADR-003-domain-modeling-in-haskell.md) | Modelagem de domínio em Haskell |
+| [004](adr/ADR-004-fast-dense-plotting.md) | Plotagem densa |
+| [005](adr/ADR-005-sse-for-live-updates.md) | SSE em vez de WebSocket |
+| [006](adr/ADR-006-no-synthetic-telemetry.md) | **Proibição de telemetria sintética** |
+| [007](adr/ADR-007-lap-axis-normalisation.md) | **Normalização do eixo espacial** |

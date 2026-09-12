@@ -1,116 +1,174 @@
-# ApexTelemetry — Guia de Inicialização Rápida (Quickstart)
+# Guia de execução
 
-Este guia orienta a inicialização e teste local do ecossistema ApexTelemetry.
+Quatro processos compõem a plataforma. O mínimo para ter a interface funcionando
+com dados reais são dois: o **gateway** e a **web**. Os outros dois acrescentam
+capacidade, não sustentação.
 
----
-
-## 1. Pré-requisitos
-- Node.js >= 20 (recomendado 26+) e `pnpm` >= 12
-- Compilador C++23 (`g++ >= 14` ou `clang++ >= 18`) e `cmake >= 3.25`
-- GHC (8.10+ ou 9.x) e `cabal`
-- Docker e Docker Compose (para PostgreSQL + TimescaleDB, Redis e NATS)
-
----
-
-## 2. Inicialização da Infraestrutura Local
-
-Inicie os serviços de persistência e mensageria em segundo plano:
-```bash
-docker compose -f infra/docker-compose.yml up -d
-```
-Verifique a saúde dos serviços:
-- **TimescaleDB**: `localhost:5432` (`apex_telemetry`)
-- **Redis**: `localhost:6379`
-- **NATS JetStream**: `localhost:4222` (Monitor em `localhost:8222`)
-- **Prometheus**: `localhost:9090`
-- **Grafana**: `localhost:3001` (login `admin` / `apex_admin`)
-
-Configure os serviços nativos para usar o banco:
-```bash
-export APEX_DATABASE_URL='postgresql://apex_user:apex_secure_pass@localhost:5432/apex_telemetry'
-```
-
-Sem essa variável, ou se o PostgreSQL estiver indisponível, o Gateway usa os arquivos normalizados e identifica a origem no cabeçalho `X-Apex-Data-Source`.
+| Processo | Papel | Obrigatório? |
+| --- | --- | --- |
+| `apex_api_gateway` | API REST + SSE, motor de alinhamento espacial | **sim** |
+| `apps/web` | Interface de análise | **sim** |
+| `strategy-hs` | Explicações e degradação de pneus | opcional — sem ele, as explicações caem no resumo determinístico em C++ e `/analysis/degradation` responde 503 |
+| `apex_ingest` + PostgreSQL | Armazém local | opcional — sem ele, o gateway consulta a OpenF1 ao vivo |
 
 ---
 
-## 3. Ingestão e API Gateway C++23
+## 1. Dependências
 
-### 3.1. Compilação Completa via CMake
 ```bash
-cmake -B build -S .
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-Executáveis gerados:
-- `build/services/api-gateway-cpp/apex_api_gateway`
-- `build/services/ingest-cpp/apex_ingest`
-- `build/services/analytics-cpp/apex_analytics`
+# Arch Linux
+sudo pacman -S --needed cmake gcc curl postgresql-libs nodejs pnpm ghc cabal-install
 
-### 3.2. Gerar Dados Normalizados e Ingestão
-```bash
-# Modo offline (gera dados normalizados a partir do audit fixture)
-./build/services/ingest-cpp/apex_ingest --offline
-
-# Modo replay (simula reprodução de telemetria espacial frame a frame)
-./build/services/ingest-cpp/apex_ingest --replay --speed 10
-
-# Modo online (ingestão direta da OpenF1 com retry e rate limiting)
-./build/services/ingest-cpp/apex_ingest --session 9472 --year 2024
+# Debian/Ubuntu
+sudo apt install -y cmake g++ libcurl4-openssl-dev libpq-dev nodejs ghc cabal-install
 ```
 
-### 3.3. Iniciar o API Gateway REST e SSE
-```bash
-./build/services/api-gateway-cpp/apex_api_gateway 8080
-```
-Endpoints disponíveis:
-- `GET http://localhost:8080/api/v1/health`
-- `GET http://localhost:8080/api/v1/sessions`
-- `GET http://localhost:8080/api/v1/sessions/9472/drivers`
-- `GET http://localhost:8080/api/v1/sessions/9472/laps`
-- `GET http://localhost:8080/api/v1/sessions/9472/race-control`
-- `GET http://localhost:8080/api/v1/sessions/9472/live` (Server-Sent Events stream contínuo)
-- `GET http://localhost:8080/api/v1/analysis/compare?session_key=9472&ref_driver=1&ref_lap=14&comp_driver=16&comp_lap=15&step_m=5`
-- `GET http://localhost:8080/api/v1/analysis/export?format=motec_csv&ref_driver=1&comp_driver=16` (MoTeC CSV & JSON)
-- `GET http://localhost:8080/metrics` (Prometheus text exposition format)
-
-O endpoint de comparação valida todos os identificadores e aceita grades espaciais entre 1 e 50 metros. Respostas inválidas usam um envelope JSON estável com `error` e `code`.
-
-O endpoint `/metrics` expõe contadores de requests por rota e status, histograma de latência (p50/p95/p99), queries ao banco e uso de fallbacks. Prometheus scrapa automaticamente via Docker Compose e o Grafana inicia com um dashboard pré-provisionado ("ApexTelemetry — API Gateway").
+Requisitos: compilador com C++23 (GCC 14+ ou Clang 18+), CMake 3.25+, Node 20+,
+GHC 8.10+.
 
 ---
 
-## 4. Frontend de Telemetria (Next.js)
+## 2. Compilar
 
-Instale as dependências e inicie o ambiente de desenvolvimento:
 ```bash
+# C++23 — gateway, ingestão e motor de análise
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+
+# Haskell — motor de domínio
+(cd services/strategy-hs && cabal build all)
+
+# TypeScript — contratos, design system e aplicação
 pnpm install
+```
+
+---
+
+## 3. Subir
+
+```bash
+# 1. Motor de domínio (opcional, porta 8092)
+(cd services/strategy-hs && APEX_STRATEGY_PORT=8092 "$(cabal list-bin strategy-hs)") &
+
+# 2. Gateway (porta 8080)
+APEX_STRATEGY_URL=http://127.0.0.1:8092 ./build/services/api-gateway-cpp/apex_api_gateway 8080 &
+
+# 3. Interface (porta 3000)
 pnpm dev
 ```
-Acesse a aplicação em [http://localhost:3000](http://localhost:3000).
 
-O frontend detectará automaticamente se o `apex_api_gateway` está online na porta 8080 e exibirá o indicador verde de baixa latência (`API GATEWAY C++23 [ONLINE] | <latency>ms`), ou fará fallback suave e seguro para a fixture de teste devidamente rotulada (`STANDALONE DEMO`).
+Abra <http://localhost:3000>. Escolha um ano, uma sessão, dois pilotos e duas
+voltas cronometradas.
 
-### Comandos de Validação de Código:
-- **Testes Unitários (Vitest)**:
-  ```bash
-  pnpm test
-  ```
-- **Typecheck Estrito (TypeScript)**:
-  ```bash
-  pnpm typecheck
-  ```
-- **Build de Produção**:
-  ```bash
-  pnpm --filter @apex-telemetry/web build
-  ```
+Confirme que a pilha está sã:
+
+```bash
+node scripts/verify-stack.mjs
+```
+
+O script exercita cada endpoint contra dados reais e confere as invariantes que
+tornam a análise confiável — entre elas o fechamento do delta acumulado contra o
+cronômetro oficial da FIA.
 
 ---
 
-## 5. Motor de Domínio e Regras (Haskell)
+## 4. Armazém local (opcional)
+
+Sem `APEX_DATABASE_URL`, o gateway consulta a OpenF1 a cada requisição e mantém um
+cache em memória com TTL de 5 minutos. Isso funciona, mas a OpenF1 impõe limite de
+requisições e a latência de uma comparação fria fica em alguns segundos. Ingerir a
+sessão elimina as duas coisas.
+
 ```bash
-cd services/strategy-hs
-cabal build
-cabal test
-cabal run strategy-hs
+cd infra && docker compose up -d timescaledb
+export APEX_DATABASE_URL="postgresql://apex_user:apex_secure_pass@localhost:5432/apex_telemetry"
+
+# Descobrir sessões
+./build/services/ingest-cpp/apex_ingest --year 2024 --country Bahrain --list
+
+# Ingerir catálogo + telemetria das 3 voltas mais rápidas de cada piloto
+./build/services/ingest-cpp/apex_ingest --session 9468 --telemetry --location --fastest 3
 ```
+
+Reinicie o gateway com `APEX_DATABASE_URL` no ambiente. O cabeçalho
+`X-Apex-Data-Source` passa a responder `postgresql`, e o badge da interface muda de
+`OPENF1 AO VIVO` para `POSTGRES`.
+
+A ingestão é idempotente: reexecutar converge para o mesmo estado. Cada resposta da
+OpenF1 é arquivada byte a byte em `data/raw/<endpoint>/`, nomeada pelo digest
+SHA-256 do conteúdo, e registrada em `raw_payloads` — é o que permite reprocessar
+uma análise meses depois e provar de qual payload cada número veio.
+
+### Opções da ingestão
+
+```
+--session <chave>      Sessão OpenF1 a ingerir
+--year / --country / --session-name / --list    Descoberta de sessões
+--drivers 1,16,44      Restringe os pilotos (padrão: todos)
+--laps 14,15           Voltas exatas para telemetria de alta frequência
+--fastest <n>          As n voltas mais rápidas de cada piloto (padrão: 3)
+--telemetry            Baixa as amostras de ECU (car_data)
+--location             Baixa as amostras de posição (traçado real)
+--dry-run              Busca e relata, sem escrever
+```
+
+---
+
+## 5. Testes
+
+```bash
+cmake --build build -j"$(nproc)" && (cd build && ctest --output-on-failure)
+(cd services/strategy-hs && cabal test)
+pnpm test
+pnpm typecheck
+node scripts/verify-stack.mjs   # exige o gateway no ar
+```
+
+---
+
+## 6. Observabilidade
+
+```bash
+cd infra && docker compose up -d prometheus grafana
+```
+
+- Prometheus: <http://localhost:9090> — raspa `/metrics` do gateway.
+- Grafana: <http://localhost:3001> (admin / `apex_admin`).
+
+As métricas incluem latência por rota, origem efetiva de cada resposta
+(`apex_requests_by_source_total`), tráfego e recusas do upstream e falhas do motor
+Haskell.
+
+---
+
+## 7. Variáveis de ambiente
+
+| Variável | Serviço | Padrão | Efeito |
+| --- | --- | --- | --- |
+| `APEX_DATABASE_URL` | gateway, ingestão | — | Sem ela, o gateway usa a OpenF1 ao vivo e a ingestão só arquiva em disco |
+| `APEX_STRATEGY_URL` | gateway | — | Sem ela, as explicações vêm do resumo em C++ e a degradação responde 503 |
+| `APEX_STRATEGY_PORT` | strategy-hs | `8092` | Porta do motor de domínio |
+| `APEX_HTTP_IP_FAMILY` | gateway, ingestão | `v4` | `auto`/`v4`/`v6`. O padrão é IPv4 porque em redes dual-stack com AAAA inalcançável a thread de resolução do libcurl trava em `poll` e `curl_easy_cleanup` bloqueia |
+| `APEX_HTTP_TIMEOUT_S` | gateway, ingestão | `25` | Timeout por requisição ao upstream |
+| `NEXT_PUBLIC_API_URL` | web | `http://localhost:8080/api/v1` | Endereço do gateway |
+
+---
+
+## Solução de problemas
+
+**A interface diz `GATEWAY OFFLINE`.** O gateway não está no ar ou está em outra
+porta. Verifique `curl localhost:8080/api/v1/health` e `NEXT_PUBLIC_API_URL`.
+
+**`UPSTREAM_RATE_LIMITED` (HTTP 429).** A OpenF1 recusou por excesso de
+requisições. O cache do gateway absorve a maior parte; para eliminar de vez,
+ingira a sessão para PostgreSQL.
+
+**`TELEMETRY_UNAVAILABLE` em uma volta específica.** A OpenF1 não tem amostras de
+ECU suficientes para aquela volta — comum em voltas de saída de box e em sessões
+interrompidas. Escolha outra volta; o painel marca a mais rápida de cada piloto.
+
+**A degradação responde 503.** `APEX_STRATEGY_URL` não está configurada ou o motor
+Haskell não está no ar.
+
+**Nenhuma sessão aparece para o ano escolhido.** A cobertura de telemetria de carro
+da OpenF1 começa em 2023.

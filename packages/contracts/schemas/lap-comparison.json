@@ -1,112 +1,960 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://contracts.apex-telemetry.io/schemas/lap-comparison.json",
+  "$id": "https://apex-telemetry.io/schemas/lap-comparison.json",
   "title": "LapComparison",
-  "type": "object",
-  "required": [
-    "schema_version",
-    "session_key",
-    "circuit_key",
-    "circuit_name",
-    "grid_step_m",
-    "total_distance_m",
-    "reference_lap",
-    "comparison_lap",
-    "channels",
-    "insights",
-    "quality_audit"
-  ],
-  "properties": {
-    "schema_version": { "type": "string", "const": "1.0.0" },
-    "session_key": { "type": "integer" },
-    "circuit_key": { "type": "integer" },
-    "circuit_name": { "type": "string" },
-    "grid_step_m": { "type": "number", "minimum": 1.0 },
-    "total_distance_m": { "type": "number", "minimum": 100.0 },
-    "reference_lap": {
+  "description": "Comparação de duas voltas alinhadas por distância, produzida pelo motor de alinhamento espacial em C++23. Todo valor tem origem em uma medição real da OpenF1; nenhum campo é preenchido com dado sintético. Gerado a partir de packages/contracts/openapi.yaml — não editar à mão.",
+  "$defs": {
+    "Error": {
       "type": "object",
-      "required": ["driver_number", "driver_code", "lap_number", "lap_time_s", "compound", "stint_lap", "coverage_pct", "samples_count"],
+      "required": [
+        "error",
+        "code"
+      ],
       "properties": {
-        "driver_number": { "type": "integer" },
-        "driver_code": { "type": "string" },
-        "lap_number": { "type": "integer" },
-        "lap_time_s": { "type": "number" },
-        "compound": { "type": "string", "enum": ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET", "UNKNOWN"] },
-        "stint_lap": { "type": "integer" },
-        "coverage_pct": { "type": "number", "minimum": 0, "maximum": 100 },
-        "samples_count": { "type": "integer" }
-      }
-    },
-    "comparison_lap": {
-      "type": "object",
-      "required": ["driver_number", "driver_code", "lap_number", "lap_time_s", "compound", "stint_lap", "coverage_pct", "samples_count"],
-      "properties": {
-        "driver_number": { "type": "integer" },
-        "driver_code": { "type": "string" },
-        "lap_number": { "type": "integer" },
-        "lap_time_s": { "type": "number" },
-        "compound": { "type": "string", "enum": ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET", "UNKNOWN"] },
-        "stint_lap": { "type": "integer" },
-        "coverage_pct": { "type": "number", "minimum": 0, "maximum": 100 },
-        "samples_count": { "type": "integer" }
-      }
-    },
-    "channels": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["distance_m", "ref", "comp", "delta_time_s"],
-        "properties": {
-          "distance_m": { "type": "number" },
-          "delta_time_s": { "type": "number" },
-          "ref": { "$ref": "#/$defs/ChannelData" },
-          "comp": { "$ref": "#/$defs/ChannelData" }
+        "error": {
+          "type": "string",
+          "description": "Mensagem legível por humanos"
+        },
+        "code": {
+          "type": "string",
+          "description": "Código estável legível por máquina",
+          "enum": [
+            "MISSING_PARAMETER",
+            "INVALID_PARAMETER",
+            "INVALID_SESSION_KEY",
+            "INVALID_DRIVER_NUMBER",
+            "INVALID_GRID_STEP",
+            "INVALID_YEAR",
+            "INVALID_FORMAT",
+            "IDENTICAL_LAPS",
+            "SESSION_NOT_FOUND",
+            "SESSIONS_NOT_FOUND",
+            "DRIVER_NOT_FOUND",
+            "LAP_NOT_FOUND",
+            "LAPS_NOT_FOUND",
+            "LAP_NOT_TIMED",
+            "TELEMETRY_UNAVAILABLE",
+            "TRACK_GEOMETRY_UNAVAILABLE",
+            "ALIGNMENT_FAILED",
+            "UPSTREAM_RATE_LIMITED",
+            "UPSTREAM_ERROR",
+            "NO_DATA_SOURCE",
+            "STRATEGY_ENGINE_UNAVAILABLE",
+            "STRATEGY_ENGINE_ERROR",
+            "INTERNAL_ERROR"
+          ]
         }
       }
     },
-    "insights": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/Insight" }
-    },
-    "quality_audit": {
+    "Health": {
       "type": "object",
-      "required": ["max_interpolation_gap_m", "discontinuous_segments", "confidence_score"],
       "properties": {
-        "max_interpolation_gap_m": { "type": "number" },
-        "discontinuous_segments": { "type": "integer" },
-        "confidence_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "status": {
+          "type": "string"
+        },
+        "service": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "analytics_engine": {
+          "type": "string"
+        },
+        "cpp_standard": {
+          "type": "integer"
+        },
+        "database": {
+          "type": "object",
+          "properties": {
+            "configured": {
+              "type": "boolean"
+            },
+            "healthy": {
+              "type": "boolean"
+            }
+          }
+        },
+        "upstream": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string"
+            },
+            "base_url": {
+              "type": "string"
+            }
+          }
+        },
+        "strategy_engine": {
+          "type": "object",
+          "properties": {
+            "configured": {
+              "type": "boolean"
+            },
+            "healthy": {
+              "type": "boolean"
+            }
+          }
+        },
+        "cache_entries": {
+          "type": "integer"
+        },
+        "uptime_seconds": {
+          "type": "integer"
+        }
       }
-    }
-  },
-  "$defs": {
+    },
+    "Session": {
+      "type": "object",
+      "required": [
+        "session_key",
+        "session_name",
+        "session_type",
+        "circuit_key",
+        "circuit_name",
+        "country_name",
+        "date_start",
+        "year"
+      ],
+      "properties": {
+        "session_key": {
+          "type": "integer"
+        },
+        "session_name": {
+          "type": "string"
+        },
+        "session_type": {
+          "type": "string"
+        },
+        "circuit_key": {
+          "type": "integer"
+        },
+        "circuit_name": {
+          "type": "string"
+        },
+        "country_name": {
+          "type": "string"
+        },
+        "date_start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "year": {
+          "type": "integer"
+        }
+      }
+    },
+    "Driver": {
+      "type": "object",
+      "required": [
+        "driver_number",
+        "broadcast_name",
+        "full_name",
+        "name_acronym",
+        "team_name",
+        "team_colour"
+      ],
+      "properties": {
+        "driver_number": {
+          "type": "integer"
+        },
+        "broadcast_name": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "name_acronym": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "team_colour": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        }
+      }
+    },
+    "Lap": {
+      "type": "object",
+      "required": [
+        "driver_number",
+        "lap_number",
+        "lap_time_s",
+        "is_valid",
+        "lap_kind",
+        "compound"
+      ],
+      "properties": {
+        "driver_number": {
+          "type": "integer"
+        },
+        "lap_number": {
+          "type": "integer"
+        },
+        "lap_time_s": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "`null` quando a volta não foi cronometrada — nunca zero."
+        },
+        "is_valid": {
+          "type": "boolean"
+        },
+        "lap_kind": {
+          "type": "string",
+          "enum": [
+            "FLYING",
+            "OUT_LAP",
+            "IN_LAP",
+            "INVALID",
+            "SAFETY_CAR"
+          ]
+        },
+        "compound": {
+          "$ref": "#/$defs/TyreCompound"
+        },
+        "stint_number": {
+          "type": "integer"
+        },
+        "tyre_age_laps": {
+          "type": "integer"
+        },
+        "sector_1_s": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "sector_2_s": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "sector_3_s": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "i1_speed_kmh": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "i2_speed_kmh": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "st_speed_kmh": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "coverage_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "`null` enquanto a telemetria da volta não tiver sido medida."
+        }
+      }
+    },
+    "Stint": {
+      "type": "object",
+      "properties": {
+        "driver_number": {
+          "type": "integer"
+        },
+        "stint_number": {
+          "type": "integer"
+        },
+        "lap_start": {
+          "type": "integer"
+        },
+        "lap_end": {
+          "type": "integer"
+        },
+        "compound": {
+          "$ref": "#/$defs/TyreCompound"
+        },
+        "tyre_age_at_start": {
+          "type": "integer"
+        }
+      }
+    },
+    "TyreCompound": {
+      "type": "string",
+      "enum": [
+        "SOFT",
+        "MEDIUM",
+        "HARD",
+        "INTERMEDIATE",
+        "WET",
+        "UNKNOWN"
+      ]
+    },
+    "RaceControlEvent": {
+      "type": "object",
+      "properties": {
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string"
+        },
+        "flag": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "sector": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "driver_number": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "lap_number": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "WeatherSample": {
+      "type": "object",
+      "properties": {
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "air_temperature_c": {
+          "type": "number"
+        },
+        "track_temperature_c": {
+          "type": "number"
+        },
+        "humidity_pct": {
+          "type": "number"
+        },
+        "pressure_mbar": {
+          "type": "number"
+        },
+        "wind_speed_ms": {
+          "type": "number"
+        },
+        "wind_direction_deg": {
+          "type": "integer"
+        },
+        "rainfall": {
+          "type": "integer"
+        }
+      }
+    },
+    "Corner": {
+      "type": "object",
+      "description": "Zona lenta detectada como mínimo local de velocidade. O rótulo `C1..Cn` é a\nordem de aparição na volta, não a numeração oficial do circuito.\n",
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string",
+          "example": "C1"
+        },
+        "entry_distance_m": {
+          "type": "number"
+        },
+        "apex_distance_m": {
+          "type": "number"
+        },
+        "exit_distance_m": {
+          "type": "number"
+        },
+        "apex_speed_kmh": {
+          "type": "number"
+        }
+      }
+    },
+    "CircuitGeometry": {
+      "type": "object",
+      "properties": {
+        "session_key": {
+          "type": "integer"
+        },
+        "circuit_key": {
+          "type": "integer"
+        },
+        "circuit_name": {
+          "type": "string"
+        },
+        "country_name": {
+          "type": "string"
+        },
+        "reference_driver_number": {
+          "type": "integer"
+        },
+        "reference_lap_number": {
+          "type": "integer"
+        },
+        "reference_lap_time_s": {
+          "type": "number"
+        },
+        "total_distance_m": {
+          "type": "number"
+        },
+        "data_source": {
+          "type": "string"
+        },
+        "path": {
+          "type": "array",
+          "description": "Cada ponto é `[distância_m, x, y]` nas unidades do transponder.",
+          "items": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "corners": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Corner"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
     "ChannelData": {
       "type": "object",
-      "required": ["time_s", "speed_kmh", "throttle_pct", "brake_pct", "rpm", "gear", "drs"],
       "properties": {
-        "time_s": { "type": "number" },
-        "speed_kmh": { "type": "number" },
-        "throttle_pct": { "type": "number", "minimum": 0, "maximum": 100 },
-        "brake_pct": { "type": "number", "minimum": 0, "maximum": 100 },
-        "rpm": { "type": "integer" },
-        "gear": { "type": "integer", "minimum": 0, "maximum": 8 },
-        "drs": { "type": "boolean" }
+        "time_s": {
+          "type": "number"
+        },
+        "speed_kmh": {
+          "type": "number"
+        },
+        "throttle_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "brake_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "rpm": {
+          "type": "integer"
+        },
+        "gear": {
+          "type": "integer"
+        },
+        "drs": {
+          "type": "boolean"
+        }
+      }
+    },
+    "AlignedChannelPoint": {
+      "type": "object",
+      "properties": {
+        "distance_m": {
+          "type": "number"
+        },
+        "delta_time_s": {
+          "type": "number",
+          "description": "tempo_comp − tempo_ref; positivo significa a comparação mais lenta."
+        },
+        "ref": {
+          "$ref": "#/$defs/ChannelData"
+        },
+        "comp": {
+          "$ref": "#/$defs/ChannelData"
+        }
+      }
+    },
+    "LapSummaryHeader": {
+      "type": "object",
+      "properties": {
+        "driver_number": {
+          "type": "integer"
+        },
+        "driver_code": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "team_colour": {
+          "type": "string"
+        },
+        "lap_number": {
+          "type": "integer"
+        },
+        "lap_time_s": {
+          "type": "number"
+        },
+        "compound": {
+          "$ref": "#/$defs/TyreCompound"
+        },
+        "stint_number": {
+          "type": "integer"
+        },
+        "stint_lap": {
+          "type": "integer"
+        },
+        "tyre_age_laps": {
+          "type": "integer"
+        },
+        "coverage_pct": {
+          "type": "number"
+        },
+        "samples_count": {
+          "type": "integer"
+        },
+        "sector_1_s": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "sector_2_s": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "sector_3_s": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "SpeedTrap": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "distance_m": {
+          "type": "number"
+        },
+        "ref_speed_kmh": {
+          "type": "number"
+        },
+        "comp_speed_kmh": {
+          "type": "number"
+        },
+        "delta_kmh": {
+          "type": "number"
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "openf1_marshalling_loop",
+            "channel_peak"
+          ],
+          "description": "Sensor oficial de passagem ou pico medido no canal de velocidade."
+        }
+      }
+    },
+    "Microsector": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "distance_start_m": {
+          "type": "number"
+        },
+        "distance_end_m": {
+          "type": "number"
+        },
+        "delta_s": {
+          "type": "number"
+        },
+        "ref_avg_speed_kmh": {
+          "type": "number"
+        },
+        "comp_avg_speed_kmh": {
+          "type": "number"
+        },
+        "winner": {
+          "type": "string",
+          "enum": [
+            "REF",
+            "COMP",
+            "EQUAL"
+          ]
+        }
       }
     },
     "Insight": {
       "type": "object",
-      "required": ["id", "driver_code", "distance_start_m", "distance_end_m", "time_loss_s", "summary", "evidence", "assumptions", "limitations", "confidence"],
       "properties": {
-        "id": { "type": "string" },
-        "driver_code": { "type": "string" },
-        "distance_start_m": { "type": "number" },
-        "distance_end_m": { "type": "number" },
-        "time_loss_s": { "type": "number" },
-        "summary": { "type": "string" },
-        "evidence": { "type": "object" },
-        "assumptions": { "type": "array", "items": { "type": "string" } },
-        "limitations": { "type": "array", "items": { "type": "string" } },
-        "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "id": {
+          "type": "string"
+        },
+        "driver_code": {
+          "type": "string"
+        },
+        "distance_start_m": {
+          "type": "number"
+        },
+        "distance_end_m": {
+          "type": "number"
+        },
+        "time_loss_s": {
+          "type": "number"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "object",
+          "properties": {
+            "min_speed_ref_kmh": {
+              "type": "number"
+            },
+            "min_speed_comp_kmh": {
+              "type": "number"
+            },
+            "max_speed_ref_kmh": {
+              "type": "number"
+            },
+            "max_speed_comp_kmh": {
+              "type": "number"
+            },
+            "full_throttle_distance_ref_m": {
+              "type": "number"
+            },
+            "full_throttle_distance_comp_m": {
+              "type": "number"
+            },
+            "braking_point_ref_m": {
+              "type": "number"
+            },
+            "braking_point_comp_m": {
+              "type": "number"
+            },
+            "braking_point_diff_m": {
+              "type": "number"
+            },
+            "apex_distance_m": {
+              "type": "number"
+            },
+            "is_corner": {
+              "type": "boolean"
+            },
+            "corner": {
+              "type": "string"
+            },
+            "cause": {
+              "type": "string",
+              "enum": [
+                "APEX_SPEED",
+                "THROTTLE_APPLICATION",
+                "BRAKING_POINT",
+                "TOP_SPEED",
+                "MIXED"
+              ]
+            }
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "engine": {
+          "type": "string",
+          "enum": [
+            "strategy-hs",
+            "analytics-cpp"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "QualityAudit": {
+      "type": "object",
+      "properties": {
+        "max_interpolation_gap_m": {
+          "type": "number"
+        },
+        "discontinuous_segments": {
+          "type": "integer"
+        },
+        "coverage_pct": {
+          "type": "number"
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "median_sample_interval_s": {
+          "type": "number"
+        },
+        "raw_samples_ref": {
+          "type": "integer"
+        },
+        "raw_samples_comp": {
+          "type": "integer"
+        },
+        "delta_closure_error_s": {
+          "type": "number",
+          "description": "|delta acumulado no fim da volta − diferença cronometrada oficial|.\nVerificação independente do alinhamento espacial.\n"
+        },
+        "source_notes": {
+          "type": "string"
+        }
+      }
+    },
+    "LapComparison": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "session_key",
+        "channels",
+        "quality_audit"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "const": "1.2.0"
+        },
+        "session_key": {
+          "type": "integer"
+        },
+        "circuit_key": {
+          "type": "integer"
+        },
+        "circuit_name": {
+          "type": "string"
+        },
+        "country_name": {
+          "type": "string"
+        },
+        "session_name": {
+          "type": "string"
+        },
+        "data_source": {
+          "type": "string"
+        },
+        "grid_step_m": {
+          "type": "number"
+        },
+        "total_distance_m": {
+          "type": "number"
+        },
+        "track_temperature_c": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "air_temperature_c": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "reference_lap": {
+          "$ref": "#/$defs/LapSummaryHeader"
+        },
+        "comparison_lap": {
+          "$ref": "#/$defs/LapSummaryHeader"
+        },
+        "corners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Corner"
+          }
+        },
+        "speed_traps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpeedTrap"
+          }
+        },
+        "microsectors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Microsector"
+          }
+        },
+        "channels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AlignedChannelPoint"
+          }
+        },
+        "insights": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Insight"
+          }
+        },
+        "quality_audit": {
+          "$ref": "#/$defs/QualityAudit"
+        }
+      }
+    },
+    "StrategyRecommendation": {
+      "type": "object",
+      "properties": {
+        "target_lap": {
+          "type": "integer"
+        },
+        "next_compound": {
+          "$ref": "#/$defs/TyreCompound"
+        },
+        "projected_gain_s": {
+          "type": "number"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "StintAnalysis": {
+      "type": "object",
+      "properties": {
+        "driver_number": {
+          "type": "integer"
+        },
+        "stint_number": {
+          "type": "integer"
+        },
+        "compound": {
+          "$ref": "#/$defs/TyreCompound"
+        },
+        "lap_start": {
+          "type": "integer"
+        },
+        "lap_end": {
+          "type": "integer"
+        },
+        "lap_count": {
+          "type": "integer"
+        },
+        "representative_laps": {
+          "type": "integer",
+          "description": "Voltas que sobreviveram ao filtro de outliers e alimentaram a regressão."
+        },
+        "avg_lap_time_s": {
+          "type": "number"
+        },
+        "best_lap_time_s": {
+          "type": "number"
+        },
+        "observed_degradation_s_per_lap": {
+          "type": "number",
+          "description": "Inclinação medida na regressão dos tempos reais."
+        },
+        "predicted_pace_loss_s": {
+          "type": "number",
+          "description": "Perda acumulada prevista pelo modelo térmico, para contraste."
+        },
+        "cliff_lap": {
+          "type": "integer"
+        },
+        "in_cliff": {
+          "type": "boolean"
+        },
+        "recommendation": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/StrategyRecommendation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DegradationReport": {
+      "type": "object",
+      "properties": {
+        "session_key": {
+          "type": "integer"
+        },
+        "engine": {
+          "type": "string"
+        },
+        "track_temperature_c": {
+          "type": "number"
+        },
+        "stints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StintAnalysis"
+          }
+        }
       }
     }
-  }
+  },
+  "$ref": "#/$defs/LapComparison"
 }

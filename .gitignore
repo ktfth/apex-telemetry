@@ -21,6 +21,9 @@ cabal.sandbox.config
 *.o
 *.hi
 
+# Artefatos de ingestão (arquivo bruto endereçado por conteúdo)
+data/
+
 # Environment & Secrets
 .env
 .env.local

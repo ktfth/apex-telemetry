@@ -1,4 +1,8 @@
-version: '3.9'
+# Infraestrutura de apoio da ApexTelemetry.
+#
+# Os serviços da aplicação (gateway C++23, motor Haskell, ingestão e web) rodam
+# fora do compose — veja docs/quickstart.md. Este arquivo sobe apenas o que é
+# estado: banco, cache, fila e observabilidade.
 
 services:
   timescaledb:
@@ -20,41 +24,13 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: apex-redis
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  nats:
-    image: nats:2.10-alpine
-    container_name: apex-nats
-    restart: unless-stopped
-    command: ["-js", "-m", "8222"]
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    volumes:
-      - nats_data:/data
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8222/varz"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   prometheus:
     image: prom/prometheus:latest
     container_name: apex-prometheus
     restart: unless-stopped
+    # O gateway roda no host; `host.docker.internal` é mapeado abaixo para alcançá-lo.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -78,7 +54,5 @@ services:
 
 volumes:
   timescale_data:
-  redis_data:
-  nats_data:
   prometheus_data:
   grafana_data:

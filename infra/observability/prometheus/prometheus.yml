@@ -3,18 +3,12 @@ global:
   evaluation_interval: 5s
 
 scrape_configs:
+  # O gateway é o único serviço que expõe /metrics. O motor de análise é uma
+  # biblioteca ligada ao gateway, a ingestão é um processo em lote e o motor
+  # Haskell é consultado sob demanda — nenhum deles é um alvo de scraping.
   - job_name: 'apex-api-gateway'
+    metrics_path: /metrics
     static_configs:
-      - targets: ['api-gateway:8080']
-
-  - job_name: 'apex-analytics'
-    static_configs:
-      - targets: ['analytics:8081']
-
-  - job_name: 'apex-ingest'
-    static_configs:
-      - targets: ['ingest:8082']
-
-  - job_name: 'apex-strategy-hs'
-    static_configs:
-      - targets: ['strategy-hs:8083']
+      - targets: ['host.docker.internal:8080']
+        labels:
+          service: api-gateway-cpp

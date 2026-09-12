@@ -1,337 +1,343 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
-import { useTelemetryStore } from '../store/telemetryStore';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { MetricInstrument } from '@apex-telemetry/ui';
+import type { AlignedChannelPoint } from '@apex-telemetry/contracts';
+import { useTelemetryStore } from '../store/telemetryStore';
+
+const CHART_WIDTH = 1000;
+const SPEED_HEIGHT = 120;
+const DELTA_HEIGHT = 70;
+const PEDALS_HEIGHT = 80;
+
+/** Extremos com folga, arredondados para um passo legível no eixo. */
+function niceBounds(min: number, max: number, step: number): [number, number] {
+  const lower = Math.floor(min / step) * step;
+  const upper = Math.ceil(max / step) * step;
+  return [lower, upper === lower ? lower + step : upper];
+}
+
+function buildPath(
+  channels: AlignedChannelPoint[],
+  totalDistance: number,
+  value: (point: AlignedChannelPoint) => number,
+  toY: (value: number) => number
+): string {
+  return channels
+    .map((point, index) => {
+      const x = (point.distance_m / totalDistance) * CHART_WIDTH;
+      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)},${toY(value(point)).toFixed(1)}`;
+    })
+    .join(' ');
+}
 
 export const TelemetryPlots: React.FC = () => {
-  const { hoveredDistanceM, setHoveredDistanceM, activeInsightId, comparison } = useTelemetryStore();
-  const channels = comparison.channels;
-  const totalDistance = comparison.total_distance_m;
-
+  const { comparison, hoveredDistanceM, setHoveredDistanceM, activeInsightId } = useTelemetryStore();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Ponto atualmente selecionado pelo cursor
-  const activeDistance = hoveredDistanceM !== null ? hoveredDistanceM : 1550; // default no ápice de T4
-  const activeIndex = Math.min(
-    channels.length - 1,
-    Math.max(0, Math.round(activeDistance / comparison.grid_step_m))
-  );
-  const activePoint = channels[activeIndex] || channels[0];
+  const data = comparison.data;
+  const channels = data?.channels ?? [];
+  const totalDistance = data?.total_distance_m ?? 0;
+  const gridStep = data?.grid_step_m ?? 5;
 
-  // Insight ativo para sombreamento do trecho
-  const activeInsight = comparison.insights.find((i) => i.id === activeInsightId);
+  /** Escalas derivadas dos dados reais: nada de teto fixo em 350 km/h. */
+  const scales = useMemo(() => {
+    if (channels.length === 0) return null;
 
-  // Mouse move handler
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const clientX = e.clientX - rect.left;
-      const pct = Math.max(0, Math.min(1, clientX / rect.width));
-      const dist = Math.round((pct * totalDistance) / comparison.grid_step_m) * comparison.grid_step_m;
-      setHoveredDistanceM(dist);
-    },
-    [comparison.grid_step_m, setHoveredDistanceM, totalDistance]
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    // Mantém o último ponto ou reseta para o trecho do insight ativo
-    if (activeInsight) {
-      setHoveredDistanceM(activeInsight.distance_start_m);
+    let speedMax = 0;
+    let deltaMin = 0;
+    let deltaMax = 0;
+    for (const point of channels) {
+      speedMax = Math.max(speedMax, point.ref.speed_kmh, point.comp.speed_kmh);
+      deltaMin = Math.min(deltaMin, point.delta_time_s);
+      deltaMax = Math.max(deltaMax, point.delta_time_s);
     }
-  }, [activeInsight, setHoveredDistanceM]);
 
-  // Projeções SVG para gráficos
-  const chartWidth = 1000;
-  const cursorX = (activePoint.distance_m / totalDistance) * chartWidth;
+    const [speedLow, speedHigh] = niceBounds(0, speedMax, 50);
+    const [deltaLow, deltaHigh] = niceBounds(deltaMin, deltaMax, 0.1);
 
-  // Insight highlight zone
-  const insightStartX = activeInsight ? (activeInsight.distance_start_m / totalDistance) * chartWidth : 0;
-  const insightEndX = activeInsight ? (activeInsight.distance_end_m / totalDistance) * chartWidth : 0;
-  const insightWidth = Math.max(2, insightEndX - insightStartX);
+    return {
+      speedTicks: Array.from(
+        { length: Math.floor((speedHigh - speedLow) / 50) },
+        (_, index) => speedLow + (index + 1) * 50
+      ).filter((tick) => tick < speedHigh),
+      speedToY: (value: number) =>
+        SPEED_HEIGHT - ((value - speedLow) / (speedHigh - speedLow)) * SPEED_HEIGHT,
+      deltaLow,
+      deltaHigh,
+      deltaToY: (value: number) =>
+        DELTA_HEIGHT - ((value - deltaLow) / (deltaHigh - deltaLow)) * DELTA_HEIGHT,
+      pedalToY: (value: number) => PEDALS_HEIGHT - (value / 100) * PEDALS_HEIGHT
+    };
+  }, [channels]);
 
-  // Gera SVG paths para velocidade (0-350 km/h mapeado para altura 120px)
-  const speedH = 120;
-  const speedRefPath = channels
-    .map((c, i) => {
-      const x = (c.distance_m / totalDistance) * chartWidth;
-      const y = speedH - (c.ref.speed_kmh / 350) * speedH;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
+  const activeIndex = useMemo(() => {
+    if (channels.length === 0) return 0;
+    const distance = hoveredDistanceM ?? 0;
+    const index = Math.round((distance - channels[0].distance_m) / gridStep);
+    return Math.max(0, Math.min(channels.length - 1, index));
+  }, [channels, hoveredDistanceM, gridStep]);
 
-  const speedCompPath = channels
-    .map((c, i) => {
-      const x = (c.distance_m / totalDistance) * chartWidth;
-      const y = speedH - (c.comp.speed_kmh / 350) * speedH;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
+  const activePoint = channels[activeIndex];
+  const activeInsight = data?.insights.find((insight) => insight.id === activeInsightId);
 
-  // Gera SVG paths para Delta de Tempo (-0.1s a +0.5s mapeado para 70px)
-  const deltaH = 70;
-  const deltaZeroY = 25; // zero line
-  const deltaScale = 80; // pixels per second
-  const deltaPoints = channels.map((c) => {
-    const x = (c.distance_m / totalDistance) * chartWidth;
-    const y = Math.max(2, Math.min(deltaH - 2, deltaZeroY + c.delta_time_s * deltaScale));
-    return { x, y };
-  });
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!containerRef.current || totalDistance <= 0) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+      setHoveredDistanceM(Math.round((fraction * totalDistance) / gridStep) * gridStep);
+    },
+    [gridStep, setHoveredDistanceM, totalDistance]
+  );
 
-  const deltaLinePath = deltaPoints
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)},${p.y.toFixed(1)}`)
-    .join(' ');
-
-  const deltaAreaPath = `M 0,${deltaZeroY} ` +
-    deltaPoints.map((p) => `L ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') +
-    ` L ${chartWidth},${deltaZeroY} Z`;
-
-  // Throttle & Brake (0-100% mapeado para 80px)
-  const pedalsH = 80;
-  const throttleRefPath = channels
-    .map((c, i) => {
-      const x = (c.distance_m / totalDistance) * chartWidth;
-      const y = pedalsH - (c.ref.throttle_pct / 100) * pedalsH;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-
-  const throttleCompPath = channels
-    .map((c, i) => {
-      const x = (c.distance_m / totalDistance) * chartWidth;
-      const y = pedalsH - (c.comp.throttle_pct / 100) * pedalsH;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-
-  const brakeRefPath = channels
-    .map((c, i) => {
-      const x = (c.distance_m / totalDistance) * chartWidth;
-      const y = pedalsH - (c.ref.brake_pct / 100) * pedalsH;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-
-  const brakeCompPath = channels
-    .map((c, i) => {
-      const x = (c.distance_m / totalDistance) * chartWidth;
-      const y = pedalsH - (c.comp.brake_pct / 100) * pedalsH;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-
-  // Grid vertical a cada 500m
-  const distanceTicks = [];
-  for (let d = 500; d < totalDistance; d += 500) {
-    distanceTicks.push(d);
+  if (comparison.loading) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-[#0a0c10] font-mono text-xs text-neutral-500">
+        <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+        <span>Buscando a telemetria das duas voltas e alinhando na grade espacial…</span>
+      </div>
+    );
   }
 
+  if (comparison.error) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-[#0a0c10] px-8 text-center font-mono">
+        <AlertTriangle className="h-7 w-7 text-amber-500" />
+        <span className="text-sm font-bold text-amber-400">{comparison.error.code}</span>
+        <p className="max-w-lg text-xs leading-relaxed text-neutral-400">{comparison.error.message}</p>
+      </div>
+    );
+  }
+
+  if (!data || !scales || !activePoint || totalDistance <= 0) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 bg-[#0a0c10] px-8 text-center font-mono text-xs text-neutral-600">
+        <span className="text-neutral-500">Nenhuma comparação ativa.</span>
+        <span>Escolha uma sessão, dois pilotos e duas voltas cronometradas no painel à esquerda.</span>
+      </div>
+    );
+  }
+
+  const refCode = data.reference_lap.driver_code;
+  const compCode = data.comparison_lap.driver_code;
+  const cursorX = (activePoint.distance_m / totalDistance) * CHART_WIDTH;
+
+  const insightStartX = activeInsight
+    ? (activeInsight.distance_start_m / totalDistance) * CHART_WIDTH
+    : 0;
+  const insightWidth = activeInsight
+    ? Math.max(2, ((activeInsight.distance_end_m - activeInsight.distance_start_m) / totalDistance) * CHART_WIDTH)
+    : 0;
+
+  const tickInterval = totalDistance > 6000 ? 1000 : 500;
+  const distanceTicks: number[] = [];
+  for (let distance = tickInterval; distance < totalDistance; distance += tickInterval) {
+    distanceTicks.push(distance);
+  }
+
+  const speedRefPath = buildPath(channels, totalDistance, (p) => p.ref.speed_kmh, scales.speedToY);
+  const speedCompPath = buildPath(channels, totalDistance, (p) => p.comp.speed_kmh, scales.speedToY);
+  const deltaPath = buildPath(channels, totalDistance, (p) => p.delta_time_s, scales.deltaToY);
+  const throttleRefPath = buildPath(channels, totalDistance, (p) => p.ref.throttle_pct, scales.pedalToY);
+  const throttleCompPath = buildPath(channels, totalDistance, (p) => p.comp.throttle_pct, scales.pedalToY);
+  const brakeRefPath = buildPath(channels, totalDistance, (p) => p.ref.brake_pct, scales.pedalToY);
+  const brakeCompPath = buildPath(channels, totalDistance, (p) => p.comp.brake_pct, scales.pedalToY);
+
+  const deltaZeroY = scales.deltaToY(0);
+  const deltaAreaPath = `M 0,${deltaZeroY} ${channels
+    .map((point) => {
+      const x = (point.distance_m / totalDistance) * CHART_WIDTH;
+      return `L ${x.toFixed(1)},${scales.deltaToY(point.delta_time_s).toFixed(1)}`;
+    })
+    .join(' ')} L ${CHART_WIDTH},${deltaZeroY} Z`;
+
+  const Overlay: React.FC<{ height: number; keyPrefix: string }> = ({ height, keyPrefix }) => (
+    <>
+      {activeInsight && (
+        <rect x={insightStartX} y={0} width={insightWidth} height={height} fill="#eab308" fillOpacity="0.12" />
+      )}
+      {distanceTicks.map((distance) => {
+        const x = (distance / totalDistance) * CHART_WIDTH;
+        return (
+          <line
+            key={`${keyPrefix}-${distance}`}
+            x1={x}
+            y1={0}
+            x2={x}
+            y2={height}
+            stroke="#1b212c"
+            strokeWidth="1"
+          />
+        );
+      })}
+      {/* Ápices detectados: ancoram a leitura do gráfico no traçado real. */}
+      {data.corners.map((corner) => {
+        const x = (corner.apex_distance_m / totalDistance) * CHART_WIDTH;
+        return (
+          <line
+            key={`${keyPrefix}-corner-${corner.label}`}
+            x1={x}
+            y1={0}
+            x2={x}
+            y2={height}
+            stroke="#475569"
+            strokeWidth="1"
+            strokeDasharray="2 4"
+          />
+        );
+      })}
+    </>
+  );
+
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0a0c10] select-none overflow-y-auto">
-      {/* Barra de Instrumentação em Tempo Real (Valores sob o Crosshair) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 p-3 bg-[#0d1015] border-b border-[#212836]">
+    <div className="flex h-full flex-1 select-none flex-col overflow-y-auto bg-[#0a0c10]">
+      <div className="grid grid-cols-2 gap-2 border-b border-[#212836] bg-[#0d1015] p-3 sm:grid-cols-4 lg:grid-cols-7">
         <MetricInstrument
           label="Distância"
-          value={`${activePoint.distance_m}`}
+          value={`${Math.round(activePoint.distance_m)}`}
           unit="m"
-          annotation={`${~~((activePoint.distance_m / totalDistance) * 100)}%`}
+          annotation={`${Math.round((activePoint.distance_m / totalDistance) * 100)}%`}
         />
         <MetricInstrument
-          label="Delta Tempo"
+          label="Delta"
           value={`${activePoint.delta_time_s >= 0 ? '+' : ''}${activePoint.delta_time_s.toFixed(3)}`}
           unit="s"
           variant={activePoint.delta_time_s > 0 ? 'loss' : 'gain'}
-          annotation={activePoint.delta_time_s > 0 ? 'LEC ATRÁS' : 'LEC À FRENTE'}
+          annotation={activePoint.delta_time_s > 0 ? `${compCode} atrás` : `${compCode} à frente`}
         />
         <MetricInstrument
           label="Velocidade"
-          value={`${activePoint.ref.speed_kmh.toFixed(1)}`}
+          value={activePoint.ref.speed_kmh.toFixed(1)}
           unit="km/h"
-          secondaryValue={`${activePoint.comp.speed_kmh.toFixed(1)}`}
-          secondaryLabel="LEC"
+          secondaryValue={activePoint.comp.speed_kmh.toFixed(1)}
+          secondaryLabel={compCode}
         />
         <MetricInstrument
           label="Acelerador"
-          value={`${activePoint.ref.throttle_pct}%`}
-          secondaryValue={`${activePoint.comp.throttle_pct}%`}
-          secondaryLabel="LEC"
+          value={`${Math.round(activePoint.ref.throttle_pct)}%`}
+          secondaryValue={`${Math.round(activePoint.comp.throttle_pct)}%`}
+          secondaryLabel={compCode}
         />
         <MetricInstrument
           label="Freio"
-          value={`${activePoint.ref.brake_pct}%`}
-          secondaryValue={`${activePoint.comp.brake_pct}%`}
-          secondaryLabel="LEC"
+          value={`${Math.round(activePoint.ref.brake_pct)}%`}
+          secondaryValue={`${Math.round(activePoint.comp.brake_pct)}%`}
+          secondaryLabel={compCode}
           variant={activePoint.ref.brake_pct > 0 ? 'loss' : 'default'}
         />
         <MetricInstrument
           label="Marcha"
           value={`G${activePoint.ref.gear}`}
           secondaryValue={`G${activePoint.comp.gear}`}
-          secondaryLabel="LEC"
+          secondaryLabel={compCode}
         />
         <MetricInstrument
           label="DRS"
-          value={activePoint.ref.drs ? 'ATIVO' : 'FECHADO'}
+          value={activePoint.ref.drs ? 'ABERTO' : 'FECHADO'}
           variant={activePoint.ref.drs ? 'gain' : 'default'}
           secondaryValue={activePoint.comp.drs ? 'ON' : 'OFF'}
-          secondaryLabel="LEC"
+          secondaryLabel={compCode}
         />
       </div>
 
-      {/* Área Interativa dos Gráficos Sincronizados */}
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        className="flex-1 p-4 flex flex-col space-y-4 cursor-crosshair relative"
+        className="relative flex flex-1 cursor-crosshair flex-col space-y-4 p-4"
       >
-        {/* Gráfico 1: Delta de Tempo por Distância */}
-        <div className="border border-[#212836] bg-[#0d1015] p-3 relative">
-          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 mb-1">
-            <span className="font-semibold text-neutral-200">DELTA ACUMULADO POR DISTÂNCIA [ΔT(d)]</span>
+        <div className="relative border border-[#212836] bg-[#0d1015] p-3">
+          <div className="mb-1 flex items-center justify-between font-mono text-[11px] text-neutral-400">
+            <span className="font-semibold text-neutral-200">DELTA ACUMULADO POR DISTÂNCIA · ΔT(d)</span>
             <div className="flex items-center space-x-3 text-[10px]">
-              <span className="text-sky-400">■ VER BASE</span>
-              <span className="text-rose-400">▲ LEC PERDA (+s)</span>
-              <span className="text-emerald-400">▼ LEC GANHO (-s)</span>
+              <span className="text-rose-400">▲ {compCode} perde</span>
+              <span className="text-emerald-400">▼ {compCode} ganha</span>
+              <span className="text-neutral-500">
+                {scales.deltaLow.toFixed(1)} … {scales.deltaHigh.toFixed(1)} s
+              </span>
             </div>
           </div>
-
-          <div className="h-20 w-full relative">
-            <svg viewBox={`0 0 ${chartWidth} ${deltaH}`} preserveAspectRatio="none" className="w-full h-full">
-              {/* Sombreamento do Insight Ativo */}
-              {activeInsight && (
-                <rect
-                  x={insightStartX}
-                  y={0}
-                  width={insightWidth}
-                  height={deltaH}
-                  fill="#eab308"
-                  fillOpacity="0.12"
-                />
-              )}
-
-              {/* Grid vertical */}
-              {distanceTicks.map((d) => {
-                const x = (d / totalDistance) * chartWidth;
-                return <line key={`dg-${d}`} x1={x} y1={0} x2={x} y2={deltaH} stroke="#1b212c" strokeWidth="1" />;
-              })}
-
-              {/* Zero baseline */}
-              <line x1={0} y1={deltaZeroY} x2={chartWidth} y2={deltaZeroY} stroke="#374151" strokeDasharray="3 3" />
-
-              {/* Area e Linha de Delta */}
+          <div className="relative h-20 w-full">
+            <svg viewBox={`0 0 ${CHART_WIDTH} ${DELTA_HEIGHT}`} preserveAspectRatio="none" className="h-full w-full">
+              <Overlay height={DELTA_HEIGHT} keyPrefix="delta" />
+              <line x1={0} y1={deltaZeroY} x2={CHART_WIDTH} y2={deltaZeroY} stroke="#374151" strokeDasharray="3 3" />
               <path d={deltaAreaPath} fill="#ef4444" fillOpacity="0.15" />
-              <path d={deltaLinePath} fill="none" stroke="#f87171" strokeWidth="2" />
-
-              {/* Cursor vertical */}
-              <line x1={cursorX} y1={0} x2={cursorX} y2={deltaH} stroke="#38bdf8" strokeWidth="1.5" />
+              <path d={deltaPath} fill="none" stroke="#f87171" strokeWidth="2" />
+              <line x1={cursorX} y1={0} x2={cursorX} y2={DELTA_HEIGHT} stroke="#38bdf8" strokeWidth="1.5" />
             </svg>
           </div>
         </div>
 
-        {/* Gráfico 2: Velocidade Sincronizada (Speed km/h) */}
-        <div className="border border-[#212836] bg-[#0d1015] p-3 relative">
-          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 mb-1">
-            <span className="font-semibold text-neutral-200">VELOCIDADE [km/h]</span>
+        <div className="relative border border-[#212836] bg-[#0d1015] p-3">
+          <div className="mb-1 flex items-center justify-between font-mono text-[11px] text-neutral-400">
+            <span className="font-semibold text-neutral-200">VELOCIDADE · km/h</span>
             <div className="flex items-center space-x-3 text-[10px]">
-              <span className="text-sky-400">― VER (#1)</span>
-              <span className="text-rose-400">― LEC (#16)</span>
+              <span style={{ color: data.reference_lap.team_colour }}>
+                ― {refCode} #{data.reference_lap.driver_number}
+              </span>
+              <span style={{ color: data.comparison_lap.team_colour }}>
+                ― {compCode} #{data.comparison_lap.driver_number}
+              </span>
             </div>
           </div>
-
-          <div className="h-32 w-full relative">
-            <svg viewBox={`0 0 ${chartWidth} ${speedH}`} preserveAspectRatio="none" className="w-full h-full">
-              {/* Insight highlight */}
-              {activeInsight && (
-                <rect
-                  x={insightStartX}
-                  y={0}
-                  width={insightWidth}
-                  height={speedH}
-                  fill="#eab308"
-                  fillOpacity="0.12"
+          <div className="relative h-32 w-full">
+            <svg viewBox={`0 0 ${CHART_WIDTH} ${SPEED_HEIGHT}`} preserveAspectRatio="none" className="h-full w-full">
+              <Overlay height={SPEED_HEIGHT} keyPrefix="speed" />
+              {scales.speedTicks.map((tick) => (
+                <line
+                  key={`speed-tick-${tick}`}
+                  x1={0}
+                  y1={scales.speedToY(tick)}
+                  x2={CHART_WIDTH}
+                  y2={scales.speedToY(tick)}
+                  stroke="#1a202c"
+                  strokeDasharray="2 2"
                 />
-              )}
-
-              {/* Grid vertical */}
-              {distanceTicks.map((d) => {
-                const x = (d / totalDistance) * chartWidth;
-                return <line key={`sg-${d}`} x1={x} y1={0} x2={x} y2={speedH} stroke="#1b212c" strokeWidth="1" />;
-              })}
-
-              {/* Linhas de grade de velocidade (100, 200, 300 km/h) */}
-              <line x1={0} y1={speedH - (100 / 350) * speedH} x2={chartWidth} y2={speedH - (100 / 350) * speedH} stroke="#1a202c" strokeDasharray="2 2" />
-              <line x1={0} y1={speedH - (200 / 350) * speedH} x2={chartWidth} y2={speedH - (200 / 350) * speedH} stroke="#1a202c" strokeDasharray="2 2" />
-              <line x1={0} y1={speedH - (300 / 350) * speedH} x2={chartWidth} y2={speedH - (300 / 350) * speedH} stroke="#1a202c" strokeDasharray="2 2" />
-
-              {/* Curvas */}
-              <path d={speedRefPath} fill="none" stroke="#38bdf8" strokeWidth="2" />
-              <path d={speedCompPath} fill="none" stroke="#f87171" strokeWidth="1.8" strokeDasharray="4 2" />
-
-              {/* Cursor vertical */}
-              <line x1={cursorX} y1={0} x2={cursorX} y2={speedH} stroke="#38bdf8" strokeWidth="1.5" />
+              ))}
+              <path d={speedRefPath} fill="none" stroke={data.reference_lap.team_colour} strokeWidth="2" />
+              <path
+                d={speedCompPath}
+                fill="none"
+                stroke={data.comparison_lap.team_colour}
+                strokeWidth="1.8"
+                strokeDasharray="4 2"
+              />
+              <line x1={cursorX} y1={0} x2={cursorX} y2={SPEED_HEIGHT} stroke="#38bdf8" strokeWidth="1.5" />
             </svg>
           </div>
         </div>
 
-        {/* Gráfico 3: Acelerador e Freio (Pedais %) */}
-        <div className="border border-[#212836] bg-[#0d1015] p-3 relative">
-          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 mb-1">
-            <span className="font-semibold text-neutral-200">ACELERADOR & FREIO [%]</span>
+        <div className="relative border border-[#212836] bg-[#0d1015] p-3">
+          <div className="mb-1 flex items-center justify-between font-mono text-[11px] text-neutral-400">
+            <span className="font-semibold text-neutral-200">ACELERADOR &amp; FREIO · %</span>
             <div className="flex items-center space-x-3 text-[10px]">
-              <span className="text-emerald-400">― THROTTLE VER</span>
-              <span className="text-amber-300">― THROTTLE LEC</span>
-              <span className="text-rose-400">― BRAKE</span>
+              <span className="text-emerald-400">― acelerador {refCode}</span>
+              <span className="text-amber-300">― acelerador {compCode}</span>
+              <span className="text-rose-400">― freio</span>
             </div>
           </div>
-
-          <div className="h-24 w-full relative">
-            <svg viewBox={`0 0 ${chartWidth} ${pedalsH}`} preserveAspectRatio="none" className="w-full h-full">
-              {/* Insight highlight */}
-              {activeInsight && (
-                <rect
-                  x={insightStartX}
-                  y={0}
-                  width={insightWidth}
-                  height={pedalsH}
-                  fill="#eab308"
-                  fillOpacity="0.12"
-                />
-              )}
-
-              {/* Grid vertical */}
-              {distanceTicks.map((d) => {
-                const x = (d / totalDistance) * chartWidth;
-                return <line key={`pg-${d}`} x1={x} y1={0} x2={x} y2={pedalsH} stroke="#1b212c" strokeWidth="1" />;
-              })}
-
-              {/* 50% e 100% lines */}
-              <line x1={0} y1={pedalsH / 2} x2={chartWidth} y2={pedalsH / 2} stroke="#1a202c" strokeDasharray="2 2" />
-
-              {/* Curvas de Freio */}
+          <div className="relative h-24 w-full">
+            <svg viewBox={`0 0 ${CHART_WIDTH} ${PEDALS_HEIGHT}`} preserveAspectRatio="none" className="h-full w-full">
+              <Overlay height={PEDALS_HEIGHT} keyPrefix="pedals" />
+              <line x1={0} y1={PEDALS_HEIGHT / 2} x2={CHART_WIDTH} y2={PEDALS_HEIGHT / 2} stroke="#1a202c" strokeDasharray="2 2" />
               <path d={brakeRefPath} fill="none" stroke="#ef4444" strokeWidth="2" />
               <path d={brakeCompPath} fill="none" stroke="#f87171" strokeWidth="1.5" strokeDasharray="3 2" />
-
-              {/* Curvas de Acelerador */}
               <path d={throttleRefPath} fill="none" stroke="#22c55e" strokeWidth="2" />
               <path d={throttleCompPath} fill="none" stroke="#facc15" strokeWidth="1.5" strokeDasharray="4 2" />
-
-              {/* Cursor vertical */}
-              <line x1={cursorX} y1={0} x2={cursorX} y2={pedalsH} stroke="#38bdf8" strokeWidth="1.5" />
+              <line x1={cursorX} y1={0} x2={cursorX} y2={PEDALS_HEIGHT} stroke="#38bdf8" strokeWidth="1.5" />
             </svg>
           </div>
         </div>
 
-        {/* Eixo de Distância (Régua com Ticks) */}
-        <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500 px-1">
+        <div className="flex items-center justify-between px-1 font-mono text-[10px] text-neutral-500">
           <span>0 m</span>
-          <span>1.000 m</span>
-          <span>2.000 m</span>
-          <span>3.000 m</span>
-          <span>4.000 m</span>
-          <span>5.000 m</span>
-          <span>{totalDistance} m</span>
+          {distanceTicks
+            .filter((_, index) => index % 2 === 0)
+            .map((distance) => (
+              <span key={`label-${distance}`}>{distance.toLocaleString('pt-BR')} m</span>
+            ))}
+          <span>{Math.round(totalDistance).toLocaleString('pt-BR')} m</span>
         </div>
       </div>
     </div>

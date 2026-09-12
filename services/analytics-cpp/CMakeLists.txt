@@ -8,7 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(apex_analytics
     src/main.cpp
     src/spatial_alignment.cpp
-    ../common/simdjson/simdjson.cpp
 )
 
 target_include_directories(apex_analytics PRIVATE
@@ -24,7 +23,6 @@ if(BUILD_TESTING)
     add_executable(apex_analytics_test
         tests/analytics_test.cpp
         src/spatial_alignment.cpp
-        ../common/simdjson/simdjson.cpp
     )
 
     target_include_directories(apex_analytics_test PRIVATE
