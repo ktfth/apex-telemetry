@@ -42,7 +42,9 @@ services:
     container_name: apex-grafana
     restart: unless-stopped
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=apex_admin
+      # Padrão de desenvolvimento local; defina GRAFANA_ADMIN_PASSWORD em qualquer
+      # ambiente que não seja a sua própria máquina.
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-apex_admin}
       - GF_USERS_ALLOW_SIGN_UP=false
     ports:
       - "3001:3000"

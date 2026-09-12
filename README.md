@@ -92,7 +92,8 @@ pnpm dev
 vivo — a plataforma funciona de imediato, sem seed nem dados de exemplo.
 
 Guia completo, ingestão para PostgreSQL e observabilidade:
-[docs/quickstart.md](docs/quickstart.md).
+[docs/quickstart.md](docs/quickstart.md). Histórico das mudanças e limitações
+conhecidas: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
