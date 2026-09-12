@@ -68,12 +68,33 @@ HttpResponse data_response(std::string body, const std::string& source) {
     return {200, "application/json", std::move(body), {{"X-Apex-Data-Source", source}}};
 }
 
-/** Envolve um handler com o cronômetro de métricas, para que /metrics reflita o tráfego real. */
+/**
+ * Envolve um handler com o cronômetro de métricas e um log de acesso.
+ *
+ * O log existe para diagnóstico operacional: sem uma linha por requisição, a única
+ * evidência de que o gateway foi chamado são contadores agregados em /metrics, que
+ * não dizem *qual* chamada falhou nem por quê.
+ */
 apex::gateway::HttpHandler instrumented(std::string route, apex::gateway::HttpHandler handler) {
     return [route = std::move(route), handler = std::move(handler)](const HttpRequest& request) {
+        const auto started = std::chrono::steady_clock::now();
         MetricsCollector::ScopedTimer timer(MetricsCollector::instance(), route);
         auto response = handler(request);
         timer.set_status(response.status_code);
+
+        const auto elapsed_ms = std::chrono::duration<double, std::milli>(
+                                    std::chrono::steady_clock::now() - started)
+                                    .count();
+        const auto source = response.headers.find("X-Apex-Data-Source");
+        std::cout << "[" << response.status_code << "] " << std::setw(22) << std::left << route
+                  << std::right << " " << std::fixed << std::setprecision(1) << std::setw(8)
+                  << elapsed_ms << " ms  " << request.path
+                  << (request.query.empty() ? "" : "?" + request.query)
+                  << (source != response.headers.end() ? "  <- " + source->second : "");
+        if (response.status_code >= 400) {
+            std::cout << "  " << response.body.substr(0, 160);
+        }
+        std::cout << '\n';
         return response;
     };
 }
@@ -347,6 +368,11 @@ std::string build_degradation_request(TelemetryResolver& resolver, int64_t sessi
 } // namespace
 
 int main(int argc, char* argv[]) {
+    // Sem isto, redirecionar a saída para arquivo deixa o log preso no buffer até
+    // o processo terminar: quem for diagnosticar um serviço no ar vê um arquivo vazio.
+    std::cout << std::unitbuf;
+    std::cerr << std::unitbuf;
+
     int port = 8080;
     if (argc > 1) {
         try {

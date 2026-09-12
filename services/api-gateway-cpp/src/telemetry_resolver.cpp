@@ -100,7 +100,8 @@ size_t TelemetryResolver::cache_entries() const {
     std::lock_guard<std::mutex> lock(cache_mutex_);
     auto* mutable_self = const_cast<TelemetryResolver*>(this);
     return cache_.size() + mutable_self->drivers_cache_.size() + mutable_self->stints_cache_.size() +
-           mutable_self->laps_cache_.size() + mutable_self->session_cache_.size();
+           mutable_self->laps_cache_.size() + mutable_self->session_cache_.size() +
+           mutable_self->lap_telemetry_cache_.size();
 }
 
 std::optional<TelemetryResolver::CacheEntry> TelemetryResolver::cache_get(
@@ -553,6 +554,10 @@ std::optional<LapTelemetry> TelemetryResolver::lap_telemetry(int64_t session_key
                                                              int32_t driver_number,
                                                              int32_t lap_number,
                                                              ResolveError& error) {
+    const std::string cache_key = std::to_string(session_key) + ':' + std::to_string(driver_number) +
+                                  ':' + std::to_string(lap_number);
+    if (auto cached = lap_telemetry_cache_.get(cache_key, cache_ttl_)) return *cached;
+
     LapTelemetry telemetry;
     telemetry.metadata.driver_number = driver_number;
     telemetry.metadata.lap_number = lap_number;
@@ -701,6 +706,8 @@ std::optional<LapTelemetry> TelemetryResolver::lap_telemetry(int64_t session_key
     telemetry.metadata.samples_count = static_cast<int32_t>(telemetry.samples.size());
     telemetry.metadata.coverage_pct =
         compute_coverage_pct(telemetry.samples, telemetry.metadata.lap_time_s);
+
+    lap_telemetry_cache_.put(cache_key, telemetry);
     return telemetry;
 }
 

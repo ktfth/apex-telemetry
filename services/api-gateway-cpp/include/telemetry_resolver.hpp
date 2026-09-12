@@ -132,6 +132,16 @@ private:
     mutable std::mutex cache_mutex_;
     std::map<std::string, CacheEntry> cache_;
 
+    /**
+     * Telemetria já montada de uma volta, por (sessão, piloto, volta).
+     *
+     * A mesma volta é pedida por mais de um caminho — a comparação usa as duas
+     * voltas escolhidas e a reconstrução do traçado usa a mais rápida da sessão,
+     * que com frequência é uma delas. Sem compartilhar, cada endpoint refazia a
+     * busca de `car_data` na OpenF1: dois segundos de rede duplicados por carga,
+     * e uma troca de volta ida-e-volta pagava tudo de novo.
+     */
+    TypedCache<std::string, LapTelemetry> lap_telemetry_cache_;
     TypedCache<int64_t, std::vector<apex::openf1::Driver>> drivers_cache_;
     TypedCache<int64_t, std::vector<apex::openf1::Stint>> stints_cache_;
     TypedCache<std::string, std::vector<apex::openf1::Lap>> laps_cache_;
