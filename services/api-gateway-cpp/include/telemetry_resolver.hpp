@@ -84,7 +84,6 @@ public:
     bool database_configured() const;
     bool database_healthy() const;
     size_t cache_entries() const;
-    void clear_cache();
 
 private:
     struct CacheEntry {
@@ -118,11 +117,6 @@ private:
             std::lock_guard<std::mutex> lock(mutex);
             if (entries.size() > 64) entries.clear();
             entries[key] = {std::move(value), std::chrono::steady_clock::now()};
-        }
-
-        void clear() {
-            std::lock_guard<std::mutex> lock(mutex);
-            entries.clear();
         }
 
         size_t size() {

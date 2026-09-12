@@ -103,17 +103,6 @@ size_t TelemetryResolver::cache_entries() const {
            mutable_self->laps_cache_.size() + mutable_self->session_cache_.size();
 }
 
-void TelemetryResolver::clear_cache() {
-    {
-        std::lock_guard<std::mutex> lock(cache_mutex_);
-        cache_.clear();
-    }
-    drivers_cache_.clear();
-    stints_cache_.clear();
-    laps_cache_.clear();
-    session_cache_.clear();
-}
-
 std::optional<TelemetryResolver::CacheEntry> TelemetryResolver::cache_get(
     const std::string& key) const {
     std::lock_guard<std::mutex> lock(cache_mutex_);

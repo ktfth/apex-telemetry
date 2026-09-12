@@ -23,7 +23,7 @@ module Apex.Domain.Degradation
 import Apex.Domain.Rules (formatFixed)
 import Apex.Domain.Types
 import Data.List (sort)
-import Data.Maybe (mapMaybe)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 
 -- | Custo típico de uma passagem pelos boxes, em segundos de volta.
@@ -171,7 +171,7 @@ analyseStint trackTemp totalLaps stint =
     observed = linearDegradation [(fromIntegral (stintLapTyreAge l), stintLapTimeS l) | l <- usable]
     finalAge = maximum (0 : map stintLapTyreAge allLaps)
     currentLap = maximum (0 : map stintLapNumber allLaps)
-    temperature = maybe 30.0 id trackTemp
+    temperature = fromMaybe 30.0 trackTemp
     notes =
       concat
         [ [ "Menos de 3 voltas representativas: a inclinação de degradação não é estatisticamente utilizável."
@@ -197,7 +197,3 @@ analyseStint trackTemp totalLaps stint =
 analyseStints :: DegradationRequest -> [StintAnalysis]
 analyseStints request =
   map (analyseStint (degTrackTemperatureC request) (degTotalSessionLaps request)) (degStints request)
-
--- Mantém o importe de Data.Maybe em uso em builds com -Wall.
-_unusedMapMaybe :: [Maybe a] -> [a]
-_unusedMapMaybe = mapMaybe id

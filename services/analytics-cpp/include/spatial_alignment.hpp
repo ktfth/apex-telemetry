@@ -166,7 +166,12 @@ public:
      */
     static std::vector<DistanceSample> integrate_distance(const std::vector<RawSample>& raw);
 
-    /** Distância acumulada em um instante arbitrário, por interpolação linear. */
+    /**
+     * Distância acumulada em um instante arbitrário, por interpolação linear.
+     * É a primitiva que relaciona os dois eixos — tempo medido e espaço integrado —
+     * e por isso é pública: localizar um sensor de passagem pelo tempo de setor, ou
+     * conferir onde a volta estava no instante cronometrado, passa por aqui.
+     */
     static double distance_at_time(const std::vector<DistanceSample>& samples, double time_s);
 
     /**
