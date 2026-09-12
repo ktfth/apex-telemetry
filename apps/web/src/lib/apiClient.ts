@@ -200,6 +200,19 @@ export function fetchLaps(
   });
 }
 
+/**
+ * Todas as voltas da sessão em uma chamada.
+ *
+ * Uma requisição serve a matriz dos dois pilotos e ainda permite ranqueá-los pela
+ * melhor volta — duas chamadas por piloto seriam mais tráfego para menos informação.
+ */
+export function fetchSessionLaps(
+  sessionKey: number,
+  signal?: AbortSignal
+): Promise<ApiResult<Lap[]>> {
+  return request<Lap[]>(`/sessions/${sessionKey}/laps`, { signal, timeoutMs: 60_000 });
+}
+
 export function fetchStints(
   sessionKey: number,
   driverNumber: number | undefined,

@@ -4,11 +4,31 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CalendarDays, Loader2, RefreshCcw, SlidersHorizontal } from 'lucide-react';
 import { DriverBadge, TyreBadge, LapKindBadge } from '@apex-telemetry/ui';
 import type { Driver, Lap, Session } from '@apex-telemetry/contracts';
-import { ApiClientError, exportUrl, fetchDrivers, fetchLaps, fetchSessions } from '../lib/apiClient';
+import {
+  ApiClientError,
+  exportUrl,
+  fetchDrivers,
+  fetchSessionLaps,
+  fetchSessions
+} from '../lib/apiClient';
 import { useTelemetryStore } from '../store/telemetryStore';
 
-/** Anos com cobertura de telemetria de carro na OpenF1. */
-const AVAILABLE_YEARS = [2025, 2024, 2023];
+/**
+ * Anos oferecidos no seletor.
+ *
+ * Derivado do ano corrente em vez de fixo: a store abre no ano corrente, e uma
+ * lista fixa faz o seletor exibir um ano diferente do que está sendo buscado assim
+ * que a temporada vira. A OpenF1 só tem telemetria de carro a partir de 2023.
+ */
+const FIRST_COVERED_YEAR = 2023;
+
+function availableYears(now: Date = new Date()): number[] {
+  const current = now.getUTCFullYear();
+  const span = Math.max(1, current - FIRST_COVERED_YEAR + 1);
+  return Array.from({ length: span }, (_, index) => current - index);
+}
+
+const AVAILABLE_YEARS = availableYears();
 
 interface Remote<T> {
   data: T | null;
@@ -108,35 +128,61 @@ export const LapSelector: React.FC = () => {
     [sessionKey]
   );
 
-  // Dois pilotos distintos por padrão; sem inventar números que não correram.
+  const sessionLaps = useRemote<Lap[]>(
+    sessionKey === null ? null : (signal) => fetchSessionLaps(sessionKey, signal),
+    [sessionKey]
+  );
+
+  /** Melhor volta cronometrada de cada piloto, na ordem do mais rápido ao mais lento. */
+  const ranking = useMemo(() => {
+    const best = new Map<number, Lap>();
+    for (const lap of timedLaps(sessionLaps.data)) {
+      const current = best.get(lap.driver_number);
+      if (!current || lap.lap_time_s! < current.lap_time_s!) best.set(lap.driver_number, lap);
+    }
+    return [...best.values()].sort((a, b) => a.lap_time_s! - b.lap_time_s!);
+  }, [sessionLaps.data]);
+
+  /**
+   * Recorte por piloto, memoizado: sem isso o `filter` devolveria um array novo a
+   * cada render e os efeitos que dependem dele reexecutariam sem que nada tivesse
+   * mudado.
+   */
+  const useDriverLaps = (driver: number | null): Remote<Lap[]> => {
+    const data = useMemo(
+      () =>
+        driver === null
+          ? null
+          : (sessionLaps.data ?? []).filter((lap) => lap.driver_number === driver),
+      [sessionLaps.data, driver]
+    );
+    return { data, loading: sessionLaps.loading, error: sessionLaps.error };
+  };
+
+  const refLaps = useDriverLaps(refDriverNumber);
+  const compLaps = useDriverLaps(compDriverNumber);
+
+  /**
+   * Seleção inicial: os dois pilotos mais rápidos da sessão, com a melhor volta de
+   * cada. Escolher pelos primeiros números de piloto era arbitrário e caía com
+   * frequência sobre alguém que não marcou volta representativa — a tela abria
+   * comparando uma pole com uma volta de instalação.
+   */
   useEffect(() => {
     const list = drivers.data;
-    if (!list || list.length === 0) return;
+    if (!list || list.length === 0 || ranking.length < 2) return;
+    const named = (number: number) =>
+      list.find((driver) => driver.driver_number === number)?.name_acronym;
 
-    const refPresent = list.some((driver) => driver.driver_number === refDriverNumber);
-    if (!refPresent) {
-      setRefSelection(list[0].driver_number, null, list[0].name_acronym);
+    if (!list.some((driver) => driver.driver_number === refDriverNumber)) {
+      const best = ranking[0];
+      setRefSelection(best.driver_number, best.lap_number, named(best.driver_number));
     }
-    const compPresent = list.some((driver) => driver.driver_number === compDriverNumber);
-    if (!compPresent) {
-      const alternative = list.find((driver) => driver.driver_number !== list[0].driver_number) ?? list[0];
-      setCompSelection(alternative.driver_number, null, alternative.name_acronym);
+    if (!list.some((driver) => driver.driver_number === compDriverNumber)) {
+      const runnerUp = ranking.find((lap) => lap.driver_number !== ranking[0].driver_number) ?? ranking[1];
+      setCompSelection(runnerUp.driver_number, runnerUp.lap_number, named(runnerUp.driver_number));
     }
-  }, [drivers.data, refDriverNumber, compDriverNumber, setRefSelection, setCompSelection]);
-
-  const refLaps = useRemote<Lap[]>(
-    sessionKey === null || refDriverNumber === null
-      ? null
-      : (signal) => fetchLaps(sessionKey, refDriverNumber, signal),
-    [sessionKey, refDriverNumber]
-  );
-
-  const compLaps = useRemote<Lap[]>(
-    sessionKey === null || compDriverNumber === null
-      ? null
-      : (signal) => fetchLaps(sessionKey, compDriverNumber, signal),
-    [sessionKey, compDriverNumber]
-  );
+  }, [drivers.data, ranking, refDriverNumber, compDriverNumber, setRefSelection, setCompSelection]);
 
   // A volta mais rápida de cada piloto é o ponto de partida natural da análise.
   useEffect(() => {

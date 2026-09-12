@@ -98,6 +98,7 @@ let comparisonController: AbortController | null = null;
 let circuitController: AbortController | null = null;
 
 export const useTelemetryStore = create<TelemetryState>((set, get) => ({
+  // Ano corrente: o seletor deriva a mesma lista, então padrão e opções coincidem.
   sessionYear: new Date().getUTCFullYear(),
   sessionKey: null,
   sessionLabel: '',
