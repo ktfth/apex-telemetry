@@ -96,22 +96,20 @@ const ErrorNote: React.FC<{ error: ApiClientError }> = ({ error }) => (
 );
 
 export const LapSelector: React.FC = () => {
-  const {
-    sessionYear,
-    setSessionYear,
-    sessionKey,
-    setSession,
-    refDriverNumber,
-    refLapNumber,
-    refDriverCode,
-    compDriverNumber,
-    compLapNumber,
-    compDriverCode,
-    setRefSelection,
-    setCompSelection,
-    comparison,
-    comparisonQuery
-  } = useTelemetryStore();
+  const sessionYear = useTelemetryStore((state) => state.sessionYear);
+  const setSessionYear = useTelemetryStore((state) => state.setSessionYear);
+  const sessionKey = useTelemetryStore((state) => state.sessionKey);
+  const setSession = useTelemetryStore((state) => state.setSession);
+  const refDriverNumber = useTelemetryStore((state) => state.refDriverNumber);
+  const refLapNumber = useTelemetryStore((state) => state.refLapNumber);
+  const refDriverCode = useTelemetryStore((state) => state.refDriverCode);
+  const compDriverNumber = useTelemetryStore((state) => state.compDriverNumber);
+  const compLapNumber = useTelemetryStore((state) => state.compLapNumber);
+  const compDriverCode = useTelemetryStore((state) => state.compDriverCode);
+  const setRefSelection = useTelemetryStore((state) => state.setRefSelection);
+  const setCompSelection = useTelemetryStore((state) => state.setCompSelection);
+  const comparison = useTelemetryStore((state) => state.comparison);
+  const comparisonQuery = useTelemetryStore((state) => state.comparisonQuery);
 
   const sessions = useRemote<Session[]>((signal) => fetchSessions(sessionYear, signal), [sessionYear]);
 

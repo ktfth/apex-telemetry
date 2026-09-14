@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { MetricInstrument } from '@apex-telemetry/ui';
-import type { AlignedChannelPoint } from '@apex-telemetry/contracts';
+import type { AlignedChannelPoint, Corner, Insight } from '@apex-telemetry/contracts';
 import { useTelemetryStore } from '../store/telemetryStore';
 
 const CHART_WIDTH = 1000;
@@ -32,8 +32,70 @@ function buildPath(
     .join(' ');
 }
 
+interface OverlayProps {
+  height: number;
+  keyPrefix: string;
+  activeInsight: Insight | null | undefined;
+  insightStartX: number;
+  insightWidth: number;
+  distanceTicks: number[];
+  corners: readonly Corner[];
+  totalDistance: number;
+}
+
+const Overlay: React.FC<OverlayProps> = React.memo(({
+  height,
+  keyPrefix,
+  activeInsight,
+  insightStartX,
+  insightWidth,
+  distanceTicks,
+  corners,
+  totalDistance
+}) => (
+  <>
+    {activeInsight && (
+      <rect x={insightStartX} y={0} width={insightWidth} height={height} fill="#eab308" fillOpacity="0.12" />
+    )}
+    {distanceTicks.map((distance) => {
+      const x = (distance / totalDistance) * CHART_WIDTH;
+      return (
+        <line
+          key={`${keyPrefix}-${distance}`}
+          x1={x}
+          y1={0}
+          x2={x}
+          y2={height}
+          stroke="#1b212c"
+          strokeWidth="1"
+        />
+      );
+    })}
+    {/* Ápices detectados: ancoram a leitura do gráfico no traçado real. */}
+    {corners.map((corner) => {
+      const x = (corner.apex_distance_m / totalDistance) * CHART_WIDTH;
+      return (
+        <line
+          key={`${keyPrefix}-corner-${corner.label}`}
+          x1={x}
+          y1={0}
+          x2={x}
+          y2={height}
+          stroke="#475569"
+          strokeWidth="1"
+          strokeDasharray="2 4"
+        />
+      );
+    })}
+  </>
+));
+Overlay.displayName = 'Overlay';
+
 export const TelemetryPlots: React.FC = () => {
-  const { comparison, hoveredDistanceM, setHoveredDistanceM, activeInsightId } = useTelemetryStore();
+  const comparison = useTelemetryStore((state) => state.comparison);
+  const hoveredDistanceM = useTelemetryStore((state) => state.hoveredDistanceM);
+  const setHoveredDistanceM = useTelemetryStore((state) => state.setHoveredDistanceM);
+  const activeInsightId = useTelemetryStore((state) => state.activeInsightId);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const data = comparison.data;
@@ -71,6 +133,49 @@ export const TelemetryPlots: React.FC = () => {
       pedalToY: (value: number) => PEDALS_HEIGHT - (value / 100) * PEDALS_HEIGHT
     };
   }, [channels]);
+
+  /** Traçados geométricos estáticos: calculados apenas na troca de dados, não a cada tick do replay. */
+  const paths = useMemo(() => {
+    if (!scales || channels.length === 0 || totalDistance <= 0) return null;
+
+    const speedRefPath = buildPath(channels, totalDistance, (p) => p.ref.speed_kmh, scales.speedToY);
+    const speedCompPath = buildPath(channels, totalDistance, (p) => p.comp.speed_kmh, scales.speedToY);
+    const deltaPath = buildPath(channels, totalDistance, (p) => p.delta_time_s, scales.deltaToY);
+    const throttleRefPath = buildPath(channels, totalDistance, (p) => p.ref.throttle_pct, scales.pedalToY);
+    const throttleCompPath = buildPath(channels, totalDistance, (p) => p.comp.throttle_pct, scales.pedalToY);
+    const brakeRefPath = buildPath(channels, totalDistance, (p) => p.ref.brake_pct, scales.pedalToY);
+    const brakeCompPath = buildPath(channels, totalDistance, (p) => p.comp.brake_pct, scales.pedalToY);
+
+    const deltaZeroY = scales.deltaToY(0);
+    const deltaAreaPath = `M 0,${deltaZeroY} ${channels
+      .map((point) => {
+        const x = (point.distance_m / totalDistance) * CHART_WIDTH;
+        return `L ${x.toFixed(1)},${scales.deltaToY(point.delta_time_s).toFixed(1)}`;
+      })
+      .join(' ')} L ${CHART_WIDTH},${deltaZeroY} Z`;
+
+    return {
+      speedRefPath,
+      speedCompPath,
+      deltaPath,
+      throttleRefPath,
+      throttleCompPath,
+      brakeRefPath,
+      brakeCompPath,
+      deltaAreaPath,
+      deltaZeroY
+    };
+  }, [channels, scales, totalDistance]);
+
+  const distanceTicks = useMemo(() => {
+    if (totalDistance <= 0) return [];
+    const interval = totalDistance > 6000 ? 1000 : 500;
+    const ticks: number[] = [];
+    for (let distance = interval; distance < totalDistance; distance += interval) {
+      ticks.push(distance);
+    }
+    return ticks;
+  }, [totalDistance]);
 
   const activeIndex = useMemo(() => {
     if (channels.length === 0) return 0;
@@ -111,7 +216,7 @@ export const TelemetryPlots: React.FC = () => {
     );
   }
 
-  if (!data || !scales || !activePoint || totalDistance <= 0) {
+  if (!data || !scales || !paths || !activePoint || totalDistance <= 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 bg-[#0a0c10] px-8 text-center font-mono text-xs text-neutral-600">
         <span className="text-neutral-500">Nenhuma comparação ativa.</span>
@@ -130,66 +235,6 @@ export const TelemetryPlots: React.FC = () => {
   const insightWidth = activeInsight
     ? Math.max(2, ((activeInsight.distance_end_m - activeInsight.distance_start_m) / totalDistance) * CHART_WIDTH)
     : 0;
-
-  const tickInterval = totalDistance > 6000 ? 1000 : 500;
-  const distanceTicks: number[] = [];
-  for (let distance = tickInterval; distance < totalDistance; distance += tickInterval) {
-    distanceTicks.push(distance);
-  }
-
-  const speedRefPath = buildPath(channels, totalDistance, (p) => p.ref.speed_kmh, scales.speedToY);
-  const speedCompPath = buildPath(channels, totalDistance, (p) => p.comp.speed_kmh, scales.speedToY);
-  const deltaPath = buildPath(channels, totalDistance, (p) => p.delta_time_s, scales.deltaToY);
-  const throttleRefPath = buildPath(channels, totalDistance, (p) => p.ref.throttle_pct, scales.pedalToY);
-  const throttleCompPath = buildPath(channels, totalDistance, (p) => p.comp.throttle_pct, scales.pedalToY);
-  const brakeRefPath = buildPath(channels, totalDistance, (p) => p.ref.brake_pct, scales.pedalToY);
-  const brakeCompPath = buildPath(channels, totalDistance, (p) => p.comp.brake_pct, scales.pedalToY);
-
-  const deltaZeroY = scales.deltaToY(0);
-  const deltaAreaPath = `M 0,${deltaZeroY} ${channels
-    .map((point) => {
-      const x = (point.distance_m / totalDistance) * CHART_WIDTH;
-      return `L ${x.toFixed(1)},${scales.deltaToY(point.delta_time_s).toFixed(1)}`;
-    })
-    .join(' ')} L ${CHART_WIDTH},${deltaZeroY} Z`;
-
-  const Overlay: React.FC<{ height: number; keyPrefix: string }> = ({ height, keyPrefix }) => (
-    <>
-      {activeInsight && (
-        <rect x={insightStartX} y={0} width={insightWidth} height={height} fill="#eab308" fillOpacity="0.12" />
-      )}
-      {distanceTicks.map((distance) => {
-        const x = (distance / totalDistance) * CHART_WIDTH;
-        return (
-          <line
-            key={`${keyPrefix}-${distance}`}
-            x1={x}
-            y1={0}
-            x2={x}
-            y2={height}
-            stroke="#1b212c"
-            strokeWidth="1"
-          />
-        );
-      })}
-      {/* Ápices detectados: ancoram a leitura do gráfico no traçado real. */}
-      {data.corners.map((corner) => {
-        const x = (corner.apex_distance_m / totalDistance) * CHART_WIDTH;
-        return (
-          <line
-            key={`${keyPrefix}-corner-${corner.label}`}
-            x1={x}
-            y1={0}
-            x2={x}
-            y2={height}
-            stroke="#475569"
-            strokeWidth="1"
-            strokeDasharray="2 4"
-          />
-        );
-      })}
-    </>
-  );
 
   return (
     <div className="flex h-full flex-1 select-none flex-col overflow-y-auto bg-[#0a0c10]">
@@ -265,10 +310,19 @@ export const TelemetryPlots: React.FC = () => {
               preserveAspectRatio="none"
               className="h-full w-full"
             >
-              <Overlay height={DELTA_HEIGHT} keyPrefix="delta" />
-              <line x1={0} y1={deltaZeroY} x2={CHART_WIDTH} y2={deltaZeroY} stroke="#374151" strokeDasharray="3 3" />
-              <path d={deltaAreaPath} fill="#ef4444" fillOpacity="0.15" />
-              <path d={deltaPath} fill="none" stroke="#f87171" strokeWidth="2" />
+              <Overlay
+                height={DELTA_HEIGHT}
+                keyPrefix="delta"
+                activeInsight={activeInsight}
+                insightStartX={insightStartX}
+                insightWidth={insightWidth}
+                distanceTicks={distanceTicks}
+                corners={data.corners}
+                totalDistance={totalDistance}
+              />
+              <line x1={0} y1={paths.deltaZeroY} x2={CHART_WIDTH} y2={paths.deltaZeroY} stroke="#374151" strokeDasharray="3 3" />
+              <path d={paths.deltaAreaPath} fill="#ef4444" fillOpacity="0.15" />
+              <path d={paths.deltaPath} fill="none" stroke="#f87171" strokeWidth="2" />
               <line x1={cursorX} y1={0} x2={cursorX} y2={DELTA_HEIGHT} stroke="#38bdf8" strokeWidth="1.5" />
             </svg>
           </div>
@@ -293,7 +347,16 @@ export const TelemetryPlots: React.FC = () => {
               preserveAspectRatio="none"
               className="h-full w-full"
             >
-              <Overlay height={SPEED_HEIGHT} keyPrefix="speed" />
+              <Overlay
+                height={SPEED_HEIGHT}
+                keyPrefix="speed"
+                activeInsight={activeInsight}
+                insightStartX={insightStartX}
+                insightWidth={insightWidth}
+                distanceTicks={distanceTicks}
+                corners={data.corners}
+                totalDistance={totalDistance}
+              />
               {scales.speedTicks.map((tick) => (
                 <line
                   key={`speed-tick-${tick}`}
@@ -305,9 +368,9 @@ export const TelemetryPlots: React.FC = () => {
                   strokeDasharray="2 2"
                 />
               ))}
-              <path d={speedRefPath} fill="none" stroke={data.reference_lap.team_colour} strokeWidth="2" />
+              <path d={paths.speedRefPath} fill="none" stroke={data.reference_lap.team_colour} strokeWidth="2" />
               <path
-                d={speedCompPath}
+                d={paths.speedCompPath}
                 fill="none"
                 stroke={data.comparison_lap.team_colour}
                 strokeWidth="1.8"
@@ -334,12 +397,21 @@ export const TelemetryPlots: React.FC = () => {
               preserveAspectRatio="none"
               className="h-full w-full"
             >
-              <Overlay height={PEDALS_HEIGHT} keyPrefix="pedals" />
+              <Overlay
+                height={PEDALS_HEIGHT}
+                keyPrefix="pedals"
+                activeInsight={activeInsight}
+                insightStartX={insightStartX}
+                insightWidth={insightWidth}
+                distanceTicks={distanceTicks}
+                corners={data.corners}
+                totalDistance={totalDistance}
+              />
               <line x1={0} y1={PEDALS_HEIGHT / 2} x2={CHART_WIDTH} y2={PEDALS_HEIGHT / 2} stroke="#1a202c" strokeDasharray="2 2" />
-              <path d={brakeRefPath} fill="none" stroke="#ef4444" strokeWidth="2" />
-              <path d={brakeCompPath} fill="none" stroke="#f87171" strokeWidth="1.5" strokeDasharray="3 2" />
-              <path d={throttleRefPath} fill="none" stroke="#22c55e" strokeWidth="2" />
-              <path d={throttleCompPath} fill="none" stroke="#facc15" strokeWidth="1.5" strokeDasharray="4 2" />
+              <path d={paths.brakeRefPath} fill="none" stroke="#ef4444" strokeWidth="2" />
+              <path d={paths.brakeCompPath} fill="none" stroke="#f87171" strokeWidth="1.5" strokeDasharray="3 2" />
+              <path d={paths.throttleRefPath} fill="none" stroke="#22c55e" strokeWidth="2" />
+              <path d={paths.throttleCompPath} fill="none" stroke="#facc15" strokeWidth="1.5" strokeDasharray="4 2" />
               <line x1={cursorX} y1={0} x2={cursorX} y2={PEDALS_HEIGHT} stroke="#38bdf8" strokeWidth="1.5" />
             </svg>
           </div>

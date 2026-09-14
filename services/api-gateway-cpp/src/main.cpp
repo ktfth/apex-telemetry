@@ -414,6 +414,7 @@ int main(int argc, char* argv[]) {
     g_server = &server;
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
+    std::signal(SIGPIPE, SIG_IGN);
 
     // ---------------------------------------------------------------- métricas
     server.route("GET", "/metrics", [&metrics](const HttpRequest&) {

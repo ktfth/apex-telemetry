@@ -50,15 +50,13 @@ const ErrorRow: React.FC<{ error: ApiClientError }> = ({ error }) => (
 );
 
 export const BottomPanel: React.FC = () => {
-  const {
-    sessionKey,
-    refDriverNumber,
-    refDriverCode,
-    compDriverNumber,
-    compDriverCode,
-    bottomTab,
-    setBottomTab
-  } = useTelemetryStore();
+  const sessionKey = useTelemetryStore((state) => state.sessionKey);
+  const refDriverNumber = useTelemetryStore((state) => state.refDriverNumber);
+  const refDriverCode = useTelemetryStore((state) => state.refDriverCode);
+  const compDriverNumber = useTelemetryStore((state) => state.compDriverNumber);
+  const compDriverCode = useTelemetryStore((state) => state.compDriverCode);
+  const bottomTab = useTelemetryStore((state) => state.bottomTab);
+  const setBottomTab = useTelemetryStore((state) => state.setBottomTab);
 
   const [raceControl, setRaceControl] = useState<Remote<RaceControlEvent[]>>(initial);
   const [laps, setLaps] = useState<Remote<{ ref: Lap[]; comp: Lap[] }>>(initial);

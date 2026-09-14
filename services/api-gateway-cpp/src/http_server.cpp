@@ -8,6 +8,7 @@
 #include <sstream>
 #include <cstring>
 #include <cctype>
+#include <csignal>
 
 namespace apex::gateway {
 
@@ -39,7 +40,7 @@ bool SseWriter::send(const std::string& data, const std::string& event, const st
     }
     frame << "\n"; // End of event
     const auto payload = frame.str();
-    const auto written = ::write(fd_, payload.data(), payload.size());
+    const auto written = ::send(fd_, payload.data(), payload.size(), MSG_NOSIGNAL);
     return written == static_cast<ssize_t>(payload.size());
 }
 
@@ -126,6 +127,7 @@ void HttpServer::start(bool block) {
     }
 
     running_ = true;
+    std::signal(SIGPIPE, SIG_IGN);
     std::cout << "[INFO] Apex API Gateway listening on http://0.0.0.0:" << port_ << "\n";
 
     auto accept_loop = [this]() {
@@ -185,7 +187,7 @@ void HttpServer::handle_client(int client_fd) {
                           "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
                           "Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
                           "Content-Length: 0\r\n\r\n";
-        write(client_fd, res.data(), res.size());
+        send(client_fd, res.data(), res.size(), MSG_NOSIGNAL);
         close(client_fd);
         return;
     }
@@ -233,7 +235,7 @@ void HttpServer::handle_client(int client_fd) {
                     "Connection: keep-alive\r\n"
                     "Access-Control-Allow-Origin: *\r\n"
                     "\r\n";
-                write(client_fd, sse_headers.data(), sse_headers.size());
+                send(client_fd, sse_headers.data(), sse_headers.size(), MSG_NOSIGNAL);
 
                 SseWriter writer(client_fd);
                 sse_route.handler(req, writer, running_);
@@ -266,7 +268,7 @@ void HttpServer::handle_client(int client_fd) {
     oss << "Connection: close\r\n\r\n" << res.body;
 
     std::string out = oss.str();
-    write(client_fd, out.data(), out.size());
+    send(client_fd, out.data(), out.size(), MSG_NOSIGNAL);
     close(client_fd);
 }
 

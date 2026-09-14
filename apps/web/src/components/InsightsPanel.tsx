@@ -12,14 +12,12 @@ const EmptyState: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 export const InsightsPanel: React.FC = () => {
-  const {
-    activeInsightId,
-    setActiveInsightId,
-    setHoveredDistanceM,
-    comparison,
-    insightTab,
-    setInsightTab
-  } = useTelemetryStore();
+  const activeInsightId = useTelemetryStore((state) => state.activeInsightId);
+  const setActiveInsightId = useTelemetryStore((state) => state.setActiveInsightId);
+  const setHoveredDistanceM = useTelemetryStore((state) => state.setHoveredDistanceM);
+  const comparison = useTelemetryStore((state) => state.comparison);
+  const insightTab = useTelemetryStore((state) => state.insightTab);
+  const setInsightTab = useTelemetryStore((state) => state.setInsightTab);
 
   const data = comparison.data;
   const refCode = data?.reference_lap.driver_code ?? 'REF';

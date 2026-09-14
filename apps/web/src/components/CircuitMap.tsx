@@ -16,8 +16,11 @@ const PADDING = 22;
  * aqui com a geometria que os carros realmente descreveram.
  */
 export const CircuitMap: React.FC = () => {
-  const { circuit, comparison, hoveredDistanceM, setHoveredDistanceM, activeInsightId } =
-    useTelemetryStore();
+  const circuit = useTelemetryStore((state) => state.circuit);
+  const comparison = useTelemetryStore((state) => state.comparison);
+  const hoveredDistanceM = useTelemetryStore((state) => state.hoveredDistanceM);
+  const setHoveredDistanceM = useTelemetryStore((state) => state.setHoveredDistanceM);
+  const activeInsightId = useTelemetryStore((state) => state.activeInsightId);
 
   const geometry = circuit.data;
 
@@ -57,24 +60,32 @@ export const CircuitMap: React.FC = () => {
     return { project, path };
   }, [geometry]);
 
-  /** Posição no traçado para uma distância arbitrária, por interpolação linear. */
+  /** Posição no traçado para uma distância arbitrária, por interpolação linear com busca binária O(log N). */
   const positionAt = useMemo(() => {
     if (!geometry || !projection) return null;
     return (distanceM: number): [number, number] | null => {
       const points = geometry.path;
       if (points.length < 2) return null;
       const clamped = Math.max(points[0][0], Math.min(points[points.length - 1][0], distanceM));
-      for (let i = 1; i < points.length; i += 1) {
-        if (points[i][0] >= clamped) {
-          const [d0, x0, y0] = points[i - 1];
-          const [d1, x1, y1] = points[i];
-          const span = d1 - d0;
-          const alpha = span > 1e-6 ? (clamped - d0) / span : 0;
-          return projection.project(x0 + alpha * (x1 - x0), y0 + alpha * (y1 - y0));
+
+      let low = 1;
+      let high = points.length - 1;
+      let i = points.length - 1;
+      while (low <= high) {
+        const mid = (low + high) >> 1;
+        if (points[mid][0] >= clamped) {
+          i = mid;
+          high = mid - 1;
+        } else {
+          low = mid + 1;
         }
       }
-      const [, lastX, lastY] = points[points.length - 1];
-      return projection.project(lastX, lastY);
+
+      const [d0, x0, y0] = points[i - 1];
+      const [d1, x1, y1] = points[i];
+      const span = d1 - d0;
+      const alpha = span > 1e-6 ? (clamped - d0) / span : 0;
+      return projection.project(x0 + alpha * (x1 - x0), y0 + alpha * (y1 - y0));
     };
   }, [geometry, projection]);
 

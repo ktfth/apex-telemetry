@@ -60,6 +60,25 @@ export function useLiveSession(): void {
       return;
     }
 
+    const scheduleFrame =
+      typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame
+        : (cb: FrameRequestCallback) => setTimeout(cb, 16) as unknown as number;
+    const cancelFrame =
+      typeof cancelAnimationFrame === 'function'
+        ? cancelAnimationFrame
+        : (id: number) => clearTimeout(id);
+
+    let latestTick: LiveTelemetryTick | null = null;
+    let rafId: number | null = null;
+
+    const flushTick = () => {
+      rafId = null;
+      if (latestTick) {
+        useTelemetryStore.getState().setLiveTick(latestTick);
+      }
+    };
+
     const onInit = () => {
       useTelemetryStore.getState().setLiveError(null);
       useTelemetryStore.getState().setLiveStreaming(true);
@@ -67,7 +86,10 @@ export function useLiveSession(): void {
 
     const onTick = (event: MessageEvent<string>) => {
       try {
-        useTelemetryStore.getState().setLiveTick(JSON.parse(event.data) as LiveTelemetryTick);
+        latestTick = JSON.parse(event.data) as LiveTelemetryTick;
+        if (rafId === null) {
+          rafId = scheduleFrame(flushTick);
+        }
       } catch {
         // Um quadro corrompido não derruba o stream; o próximo chega em milissegundos.
       }
@@ -79,6 +101,10 @@ export function useLiveSession(): void {
      * EventSource dispara sem corpo. Distinguimos pelo `data`.
      */
     const onError = (event: Event) => {
+      if (rafId !== null) {
+        cancelFrame(rafId);
+        rafId = null;
+      }
       const data = (event as MessageEvent<string>).data;
       let message = 'Conexão com o stream de replay interrompida.';
       if (typeof data === 'string' && data.length > 0) {
@@ -97,6 +123,13 @@ export function useLiveSession(): void {
     };
 
     const onEnd = () => {
+      if (rafId !== null) {
+        cancelFrame(rafId);
+        rafId = null;
+      }
+      if (latestTick) {
+        useTelemetryStore.getState().setLiveTick(latestTick);
+      }
       useTelemetryStore.getState().setLiveStreaming(false);
       source.close();
     };
@@ -107,6 +140,10 @@ export function useLiveSession(): void {
     source.addEventListener('end', onEnd);
 
     return () => {
+      if (rafId !== null) {
+        cancelFrame(rafId);
+        rafId = null;
+      }
       source.removeEventListener('init', onInit);
       source.removeEventListener('telemetry_tick', onTick as EventListener);
       source.removeEventListener('error', onError);

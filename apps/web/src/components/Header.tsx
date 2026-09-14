@@ -19,23 +19,21 @@ import { useTelemetryStore } from '../store/telemetryStore';
 const REPLAY_SPEEDS = [1, 4, 10, 25];
 
 export const Header: React.FC = () => {
-  const {
-    leftPanelOpen,
-    rightPanelOpen,
-    bottomPanelOpen,
-    toggleLeftPanel,
-    toggleRightPanel,
-    toggleBottomPanel,
-    liveStreaming,
-    liveError,
-    replayActive,
-    replaySpeed,
-    toggleReplay,
-    setReplaySpeed,
-    sessionYear,
-    sessionLabel,
-    comparison
-  } = useTelemetryStore();
+  const leftPanelOpen = useTelemetryStore((state) => state.leftPanelOpen);
+  const rightPanelOpen = useTelemetryStore((state) => state.rightPanelOpen);
+  const bottomPanelOpen = useTelemetryStore((state) => state.bottomPanelOpen);
+  const toggleLeftPanel = useTelemetryStore((state) => state.toggleLeftPanel);
+  const toggleRightPanel = useTelemetryStore((state) => state.toggleRightPanel);
+  const toggleBottomPanel = useTelemetryStore((state) => state.toggleBottomPanel);
+  const liveStreaming = useTelemetryStore((state) => state.liveStreaming);
+  const liveError = useTelemetryStore((state) => state.liveError);
+  const replayActive = useTelemetryStore((state) => state.replayActive);
+  const replaySpeed = useTelemetryStore((state) => state.replaySpeed);
+  const toggleReplay = useTelemetryStore((state) => state.toggleReplay);
+  const setReplaySpeed = useTelemetryStore((state) => state.setReplaySpeed);
+  const sessionYear = useTelemetryStore((state) => state.sessionYear);
+  const sessionLabel = useTelemetryStore((state) => state.sessionLabel);
+  const comparison = useTelemetryStore((state) => state.comparison);
 
   const [health, setHealth] = useState<GatewayHealth>({ online: false });
 
